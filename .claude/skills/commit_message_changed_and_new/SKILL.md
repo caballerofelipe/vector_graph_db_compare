@@ -1,0 +1,24 @@
+---
+name: commit_message_changed_and_new
+description: Creates a commit message for all changed and added files.
+---
+Every time this skill runs, check on disk using bash whether `tmp_commit_message.txt` exists and whether it has content; do not assume it exists or that it does not exist without checking.
+
+Let's review all the changes and create a commit message. Do not do the commit, I only want the commit message in a tmp_commit_message.txt file in the root of the project, if the file exists and has content, tell me there's an error and stop the execution. If the file doesn't exist or is empty, continue.
+
+The commit message I want needs to be simple, human readable, it should explain what was done like explaining it to a boss. If the person needs more information they should go see the code.
+
+The commit message should have this structure:
+
+```
+Tag line
+
+- task 1
+- task 2
+...
+- task n
+````
+
+Where Tag line is a line that can be checked in the log to identify the main idea for the commit. Below the tag line there should be a list of tasks.
+
+Ask me if I approve the commit message in tmp_commit_message.txt, if I do, ask me if I want to use tmp_commit_message.txt to do the commit and do it for me. After you're done, remove the file.
