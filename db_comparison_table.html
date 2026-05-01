@@ -406,6 +406,12 @@ const boolCols = [
 const filterState = {};
 boolCols.forEach(c => filterState[c.key] = null);
 
+// Build a key → tip-text map from th[data-col] elements (single source of truth).
+const colTips = {};
+document.querySelectorAll('th[data-col]').forEach(th => {
+  if (th.dataset.tip) colTips[th.dataset.col] = th.dataset.tip;
+});
+
 function renderPills() {
   const container = document.getElementById('pills');
   container.innerHTML = '';
@@ -415,6 +421,7 @@ function renderPills() {
     if (filterState[c.key] === true) p.classList.add('on');
     if (filterState[c.key] === false) p.classList.add('off');
     p.textContent = c.label;
+    if (colTips[c.key]) p.dataset.tip = colTips[c.key];
     p.onclick = () => {
       const state = filterState[c.key];
       if (state === null) {
@@ -502,15 +509,6 @@ renderPills();
 render();
 
 const tip = document.getElementById('tooltip');
-document.querySelectorAll('[data-tip]').forEach(el => {
-  el.addEventListener('mouseenter', e => {
-    tip.textContent = el.dataset.tip;
-    tip.style.opacity = '1';
-    positionTip(e);
-  });
-  el.addEventListener('mousemove', positionTip);
-  el.addEventListener('mouseleave', () => { tip.style.opacity = '0'; });
-});
 function positionTip(e) {
   const pad = 14;
   let x = e.clientX + pad;
@@ -520,6 +518,23 @@ function positionTip(e) {
   tip.style.left = x + 'px';
   tip.style.top = y + 'px';
 }
+// Use event delegation so tooltip works on dynamically re-rendered pill elements too.
+document.addEventListener('mouseover', e => {
+  const el = e.target.closest('[data-tip]');
+  if (!el) return;
+  tip.textContent = el.dataset.tip;
+  tip.style.opacity = '1';
+  positionTip(e);
+});
+document.addEventListener('mousemove', e => {
+  if (tip.style.opacity === '1') positionTip(e);
+});
+document.addEventListener('mouseout', e => {
+  const el = e.target.closest('[data-tip]');
+  if (!el) return;
+  // Only hide if the pointer is actually leaving the tipped element (not moving to a child).
+  if (!el.contains(e.relatedTarget)) tip.style.opacity = '0';
+});
 </script>
 </body>
 </html>

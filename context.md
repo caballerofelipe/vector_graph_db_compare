@@ -7,7 +7,7 @@ A self-contained, interactive HTML file (`db_comparison_table.html`) comparing 2
 - **Sortable columns** — click any header to sort ascending/descending
 - **Three-state feature filter pills** — click to cycle: none (no filter) → on (green, require feature) → off (pink, exclude feature)
 - **Text search** — filters by name, tagline, language, or OS
-- **Hover tooltips** on every column header explaining what the column means (implemented via a JS-driven fixed-position `div`, not CSS `::after`, because sticky headers clip pseudo-element tooltips)
+- **Hover tooltips** on every column header and every filter pill explaining what the column means (implemented via a JS-driven fixed-position `div` with document-level event delegation, not CSS `::after` or per-element listeners — sticky headers clip pseudo-elements, and delegation handles dynamically re-rendered pills without rebinding)
 
 ---
 
@@ -74,9 +74,7 @@ Turbopuffer and ClickHouse were considered but not added (too niche / primarily 
 ## Pending changes (not yet implemented)
 
 ### UI / UX
-- **Change title** to "Vector and Graph DB Comparison Table"
 - **Column visibility toggle** — allow turning individual columns on/off so the user can hide columns they don't care about
-- **Tooltip on filter pills** — the filter buttons should show the same definition tooltip as the corresponding column header
 
 ### Cell-level notes
 - Some cells need nuance beyond a simple yes/no dot. If a cell has a note, display a small **ⓘ** (i in a circle) next to the dot. Hovering it shows the note as a tooltip (same JS-driven tooltip mechanism already in place).
