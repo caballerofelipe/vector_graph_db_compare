@@ -2,12 +2,14 @@
 
 ## What was built
 
-A self-contained, interactive HTML file (`db_comparison_table.html`) comparing 25 databases (vector, graph, and multi-model) across 20 columns. It has:
+A self-contained, interactive HTML file (`db_comparison_table.html`) comparing 25 databases (vector, graph, and multi-model) across 23 columns. It has:
 
 - **Sortable columns** — click any header to sort ascending/descending
 - **Three-state feature filter pills** — click to cycle: none (no filter) → on (green, require feature) → off (pink, exclude feature)
 - **Text search** — filters by name, tagline, language, or OS
-- **Hover tooltips** on every column header and every filter pill explaining what the column means (implemented via a JS-driven fixed-position `div` with document-level event delegation, not CSS `::after` or per-element listeners — sticky headers clip pseudo-elements, and delegation handles dynamically re-rendered pills without rebinding)
+- **Hover tooltips** on every column header and every filter pill (JS-driven fixed-position `div` with document-level event delegation)
+- **Cell-level caveat notes** — boolean cells with a nuance show an orange dot instead of green; hovering reveals the note. Only "on" cells with genuine caveats get this treatment; "off" cells never show a note indicator.
+- **Light/dark theme toggle** — three-state (System / Light / Dark), defaults to system `prefers-color-scheme`
 
 ---
 
@@ -40,7 +42,10 @@ Turbopuffer and ClickHouse were considered but not added (too niche / primarily 
 | Dock | `docker` | Official Docker image available |
 | 1-Node | `single` | Runs on a single machine, no cluster needed |
 | Low-Ops | `lowops` | Minimal ongoing maintenance overhead |
-| Embed | `embeddable` | **Embedded in the SQLite sense** — runs in-process, stores to local files, no server process needed |
+| RAM | `ram` | Data held primarily in memory for fast access |
+| Persist | `persistence` | Saves state to disk; data survives restarts |
+| Server | `server` | Can run as a standalone server process over a network |
+| Embed | `embeddable` | Runs in-process (SQLite-style) — no server process needed |
 | Trav | `traversal` | Graph traversal — multi-hop queries, path-finding |
 | Hybrid | `hybrid` | Hybrid search — vector + keyword/BM25 in one query |
 | RAG | `rag` | Integrates well as retrieval layer in RAG pipelines |
@@ -53,19 +58,43 @@ Turbopuffer and ClickHouse were considered but not added (too niche / primarily 
 
 ---
 
+## Cell-level caveat notes (orange dots)
+
+A green "on" dot turns orange when the feature has a caveat worth knowing. Hovering shows the note. Current orange dots:
+
+| DB | Column | Note |
+|---|---|---|
+| Weaviate | OSS | BSL 1.1 from v1.25+ — not OSI-approved; converts to Apache 2.0 after 4 years |
+| FAISS | Embeddable | In-process library with no storage engine; caller is fully responsible for saving and loading index files |
+| Chroma | Embeddable | Embedded mode available; persistent-client and server modes also supported |
+| Chroma | Persistence | Default in-memory mode has no persistence; use PersistentClient for durability |
+| Redis Vector | RAM | All data lives in RAM; disk persistence must be explicitly configured via AOF or RDB — not enabled by default |
+| Redis Vector | Persistence | Persistence via AOF or RDB snapshots; must be explicitly enabled in redis.conf — off by default |
+| Memgraph | Persistence | Persists via periodic snapshots and WAL; primarily in-memory — recent in-flight writes may be lost on unexpected crash |
+| FalkorDB | RAM | Built on Redis; data is RAM-first with optional AOF/RDB persistence |
+| FalkorDB | Persistence | Relies on Redis AOF/RDB persistence; must be explicitly enabled in Redis config — not on by default |
+| JanusGraph | Docker | Official image requires an external storage backend (Cassandra, HBase, or BerkeleyDB) — additional services needed alongside it |
+| ArangoDB | OSS | Licensed under BSL 1.1 from v3.11+ — not OSI-approved open source; converts to Apache 2.0 after 4 years |
+| PG + pgvector + AGE | Cypher | Cypher support via Apache AGE — implementation is partial; not all Cypher clauses or functions are supported |
+| CozoDB | Embeddable | Backend is configurable: in-memory, SQLite, or RocksDB |
+| CozoDB | Persistence | Depends on backend; SQLite and RocksDB backends are durable |
+| SurrealDB | Embeddable | Embedded mode available via the embedded feature flag in Rust/Python |
+
+---
+
 ## Design
 
-- Dark theme (`#0d0f14` background)
+- Dark theme default (`#0d0f14` background), light theme available
 - Fonts: `Space Mono` (headers/mono), `DM Sans` (body)
 - Green accent (`#4ade80`) for active states and yes-dots
-- Boolean values shown as green glowing dot (✓) or dark empty dot (–)
+- Orange dot (`#f97316`) for yes-with-caveat cells
+- Boolean values shown as green/orange glowing dot (yes) or dark empty dot (no)
 - Fully self-contained — no external runtime dependencies (fonts load from Google Fonts)
 
 ---
 
 ## Known issues / things to revisit
 
-- The incomplete `thead` block from a failed mid-session edit was cleaned up; the final file is valid
 - Tooltip positioning flips left/up near screen edges
 - No mobile layout — table requires horizontal scroll on small screens
 
@@ -76,105 +105,17 @@ Turbopuffer and ClickHouse were considered but not added (too niche / primarily 
 ### UI / UX
 - **Column visibility toggle** — allow turning individual columns on/off so the user can hide columns they don't care about
 
-### Cell-level notes
-- Some cells need nuance beyond a simple yes/no dot. If a cell has a note, display a small **ⓘ** (i in a circle) next to the dot. Hovering it shows the note as a tooltip (same JS-driven tooltip mechanism already in place).
-- Examples of cells that need notes:
-  - Chroma → Persistence: "Persistent mode only; default in-memory mode has no persistence"
-  - CozoDB → Embeddable: "Backend is selectable: in-memory, SQLite, or RocksDB"
-  - CozoDB → Persistence: "Depends on backend; RocksDB/SQLite backends are durable"
-  - FAISS → Persistence: "No built-in persistence; caller must manually save/load index files"
-  - FAISS → Server: "Library only — no server mode; must be wrapped by the application"
-  - FalkorDB → RAM: "Built on Redis; data is RAM-first with optional persistence"
-  - Memgraph → Embeddable: "In-memory server; not embeddable in the SQLite sense"
-  - SurrealDB → Embeddable: "Embedded mode available via the embedded feature flag"
-  - Pinecone → Self-hosted: "SaaS only — no self-host option"
-  - MongoDB Atlas Vector → Self-hosted: "Atlas is cloud-only; self-hosted MongoDB requires separate vector setup"
-- The ⓘ icon should be subtle — small, muted color, only visible on row hover or always visible but unobtrusive
-
-### Light theme
-- Add a **light/dark theme toggle** button in the header area
-- Default can be dark (current) or follow system `prefers-color-scheme`
-- Light theme: white/off-white backgrounds, dark text, same green accent (slightly deeper for contrast on light)
-- All colors must use CSS variables — no hardcoded hex in component styles — so the theme swap is a single class toggle on `<body>` or `:root`
-- Theme preference persisted in `localStorage`
-
 ### CSV-driven data
 - Extract all DB records out of the HTML into a separate **`db_comparison.csv`** file
 - Both files live in the same directory; HTML loads the CSV via `fetch()` on page load with a relative path
 - No DB data should be hardcoded in the JS — everything comes from the CSV
 - **CSV format:**
-  - Header row uses the JS data keys: `name, tagline, vector, graph, oss, selfhost, lightweight, docker, single, lowops, embeddable, traversal, hybrid, rag, cypher, langs, lc, compat, url, src, ram, persistence, server, notes` (note: `embeddable` column replaces the old `filebased`)
+  - Header row uses the JS data keys: `name, tagline, vector, graph, oss, selfhost, lightweight, docker, single, lowops, ram, persistence, server, embeddable, traversal, hybrid, rag, cypher, langs, lc, compat, url, src, notes`
   - Boolean columns: `1` = yes, `0` = no
   - String columns (`langs`, `compat`, `url`, `src`, `tagline`): plain text, double-quoted if they contain commas
   - **`notes` column**: JSON-encoded object keyed by column name, double-quoted and CSV-escaped. Example: `"{""embeddable"":""Embedded mode available; server mode also supported"",""ram"":""RAM-first by design""}"`
   - Empty notes: leave the cell empty or `{}`
-  - Add a link to allow the user to download the CSV directly for their usage.
-
-### Cell-level notes (ⓘ icon)
-- If a DB's `notes` object has an entry for a given column, render a small **ⓘ** icon inside that cell next to the dot
-- Hovering ⓘ shows the note text using the same JS-driven fixed-position tooltip already in place
-- The ⓘ should be subtle — small, muted color, always visible (not just on hover)
-- Cells with no note show only the dot, no icon
-- Known notes to include (minimum):
-
-| DB | Column | Note |
-|---|---|---|
-| FAISS | persistence | No built-in persistence; caller must manually save/load index files |
-| FAISS | server | Library only — no server mode; must be wrapped by the application |
-| Chroma | embeddable | Embedded mode available; persistent-client and server modes also supported |
-| Chroma | persistence | Default in-memory mode has no persistence; use PersistentClient for durability |
-| CozoDB | embeddable | Backend is configurable: in-memory, SQLite, or RocksDB |
-| CozoDB | persistence | Depends on backend; SQLite and RocksDB backends are durable |
-| FalkorDB | ram | Built on Redis; data is RAM-first with optional AOF/RDB persistence |
-| Memgraph | embeddable | In-memory server; not embeddable in the SQLite sense — requires a server process |
-| SurrealDB | embeddable | Embedded mode available via the embedded feature flag in Rust/Python |
-| Pinecone | selfhost | SaaS only — no self-host option |
-| MongoDB Atlas Vector | selfhost | Atlas is cloud-only; self-hosted MongoDB requires separate vector configuration |
-
-### New columns to add
-
-| Column | Key | Description |
-|---|---|---|
-| RAM | `ram` | Runs primarily in RAM — data held in memory for fast access (e.g. Redis, Memgraph, FalkorDB) |
-| Persistence | `persistence` | Saves state to disk so data survives restarts — no data loss on reboot |
-| Server | `server` | Can be run as a standalone server process accessible over a network |
-
-### Data to fill in for new columns (research needed)
-All values below are a starting point — verify before shipping:
-
-| DB | RAM | Persistence | Server |
-|---|---|---|---|
-| Qdrant | 0 | 1 | 1 |
-| Chroma | 0 | 1 | 1 |
-| Weaviate | 0 | 1 | 1 |
-| Milvus | 0 | 1 | 1 |
-| Pinecone | 0 | 1 | 1 |
-| LanceDB | 0 | 1 | 1 |
-| pgvector | 0 | 1 | 1 |
-| pgvectorscale | 0 | 1 | 1 |
-| FAISS | 0 | 0 | 0 |
-| Elasticsearch | 0 | 1 | 1 |
-| MongoDB Atlas Vector | 0 | 1 | 1 |
-| Redis Vector | 1 | 1 | 1 |
-| Neo4j | 0 | 1 | 1 |
-| Memgraph | 1 | 1 | 1 |
-| TigerGraph | 0 | 1 | 1 |
-| Amazon Neptune | 0 | 1 | 1 |
-| FalkorDB | 1 | 1 | 1 |
-| JanusGraph | 0 | 1 | 1 |
-| OrientDB | 0 | 1 | 1 |
-| ArcadeDB | 0 | 1 | 1 |
-| ArangoDB | 0 | 1 | 1 |
-| PG + pgvector + AGE | 0 | 1 | 1 |
-| CozoDB | 0 | 1 | 1 |
-| Vespa | 0 | 1 | 1 |
-| SurrealDB | 0 | 1 | 1 |
-
-Notes:
-- **FalkorDB** runs on top of Redis so it is RAM-first with optional persistence
-- **FAISS** is a library — it has no built-in persistence or server mode; the caller is responsible for saving/loading index files
-- **Chroma** persistence depends on mode: in-memory (no persistence) or persistent client (yes); mark as 1 since persistent mode is the common production path
-- **CozoDB** persistence depends on chosen backend (in-memory, SQLite, RocksDB); mark as 1 since durable backends are default for production
+  - Add a link to allow the user to download the CSV directly for their usage
 
 ---
 
