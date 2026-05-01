@@ -397,6 +397,7 @@
   if (!window.matchMedia('(prefers-color-scheme: dark)').matches)
     document.documentElement.classList.add('light');
 </script>
+<script src="db_comparison_data.js"></script>
 </head>
 <body>
 <div id="tooltip"></div>
@@ -405,7 +406,10 @@
   <div class="header">
     <div class="header-top">
       <h1>Vector and Graph DB <span>Comparison</span> Table</h1>
-      <button class="btn-theme" id="themeBtn" aria-label="Toggle light/dark theme"></button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn-reset" id="csvBtn">↓ CSV</button>
+        <button class="btn-theme" id="themeBtn" aria-label="Toggle light/dark theme"></button>
+      </div>
     </div>
     <p>25 databases — vector, graph, and multi-model. Sort any column, filter by feature.</p>
   </div>
@@ -470,46 +474,50 @@
 const Y = '<span class="yes-dot"></span>';
 const N = '<span class="no-dot"></span>';
 
-const dbs = [
-  {name:"Qdrant",tagline:"High-perf vector search engine",vector:1,graph:0,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,ram:0,persistence:1,server:1,embeddable:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, Go, JS, Rust",lc:1,compat:"Linux, macOS, Windows",url:"https://qdrant.tech",src:"https://github.com/qdrant/qdrant"},
-  {name:"Chroma",tagline:"AI-native open-source embedding DB",vector:1,graph:0,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,ram:0,persistence:1,server:1,embeddable:1,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, JS/TS",lc:1,compat:"Linux, macOS, Windows",url:"https://trychroma.com",src:"https://github.com/chroma-core/chroma",
-    notes:{embeddable:"Embedded mode available; persistent-client and server modes also supported",persistence:"Default in-memory mode has no persistence; use PersistentClient for durability"}},
-  {name:"Weaviate",tagline:"AI-native vector database",vector:1,graph:0,oss:1,selfhost:1,lightweight:0,docker:1,single:1,lowops:0,ram:0,persistence:1,server:1,embeddable:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, Go, JS, Java",lc:1,compat:"Linux, macOS, Windows",url:"https://weaviate.io",src:"https://github.com/weaviate/weaviate",
-    notes:{oss:"Uses Business Source License (BSL 1.1) from v1.25+ — not OSI-approved; converts to Apache 2.0 after 4 years"}},
-  {name:"Milvus",tagline:"Cloud-native vector DB for scale",vector:1,graph:0,oss:1,selfhost:1,lightweight:0,docker:1,single:0,lowops:0,ram:0,persistence:1,server:1,embeddable:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, Java, Go, JS",lc:1,compat:"Linux, macOS, Windows",url:"https://milvus.io",src:"https://github.com/milvus-io/milvus"},
-  {name:"Pinecone",tagline:"Fully managed vector database",vector:1,graph:0,oss:0,selfhost:0,lightweight:1,docker:0,single:0,lowops:1,ram:0,persistence:1,server:1,embeddable:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, JS, Go, Java",lc:1,compat:"Cloud (SaaS)",url:"https://pinecone.io",src:"",
-    notes:{selfhost:"SaaS only — no self-host option"}},
-  {name:"LanceDB",tagline:"Serverless vector DB for AI apps",vector:1,graph:0,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,ram:0,persistence:1,server:1,embeddable:1,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, JS/TS, Rust",lc:1,compat:"Linux, macOS, Windows",url:"https://lancedb.com",src:"https://github.com/lancedb/lancedb"},
-  {name:"pgvector",tagline:"Vector similarity search for Postgres",vector:1,graph:0,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,ram:0,persistence:1,server:1,embeddable:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"All Postgres clients",lc:1,compat:"Linux, macOS, Windows",url:"https://github.com/pgvector/pgvector",src:"https://github.com/pgvector/pgvector"},
-  {name:"pgvectorscale",tagline:"High-perf vector search on Postgres",vector:1,graph:0,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,ram:0,persistence:1,server:1,embeddable:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"All Postgres clients",lc:1,compat:"Linux, macOS",url:"https://github.com/timescale/pgvectorscale",src:"https://github.com/timescale/pgvectorscale"},
-  {name:"FAISS",tagline:"Efficient similarity search library (Meta)",vector:1,graph:0,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,ram:0,persistence:0,server:0,embeddable:1,traversal:0,hybrid:0,rag:0,cypher:0,langs:"Python, C++",lc:1,compat:"Linux, macOS, Windows",url:"https://faiss.ai",src:"https://github.com/facebookresearch/faiss",
-    notes:{persistence:"No built-in persistence; caller must manually save/load index files",server:"Library only — no server mode; must be wrapped by the application",embeddable:"In-process library with no storage engine; caller is fully responsible for saving and loading index files"}},
-  {name:"Elasticsearch",tagline:"Distributed search & analytics engine",vector:1,graph:0,oss:0,selfhost:1,lightweight:0,docker:1,single:1,lowops:0,ram:0,persistence:1,server:1,embeddable:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, Java, JS, Go, Ruby",lc:1,compat:"Linux, macOS, Windows",url:"https://elastic.co",src:"https://github.com/elastic/elasticsearch"},
-  {name:"MongoDB Atlas Vector",tagline:"Document DB with vector search",vector:1,graph:0,oss:0,selfhost:0,lightweight:0,docker:0,single:0,lowops:1,ram:0,persistence:1,server:1,embeddable:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, JS, Java, Go, C#",lc:1,compat:"Cloud (SaaS)",url:"https://www.mongodb.com/products/platform/atlas-vector-search",src:"",
-    notes:{selfhost:"Atlas is cloud-only; self-hosted MongoDB requires separate vector configuration"}},
-  {name:"Redis Vector",tagline:"In-memory DB with vector search",vector:1,graph:0,oss:0,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,ram:1,persistence:1,server:1,embeddable:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, JS, Java, Go, C#",lc:1,compat:"Linux, macOS, Windows",url:"https://redis.io/docs/latest/develop/get-started/vector-database/",src:"https://github.com/redis/redis",
-    notes:{ram:"All data lives in RAM; disk persistence must be explicitly configured via AOF or RDB — not enabled by default",persistence:"Persistence via AOF or RDB snapshots; must be explicitly enabled in redis.conf — off by default"}},
-  {name:"Neo4j",tagline:"Native graph database platform",vector:1,graph:1,oss:0,selfhost:1,lightweight:0,docker:1,single:1,lowops:0,ram:0,persistence:1,server:1,embeddable:0,traversal:1,hybrid:1,rag:1,cypher:1,langs:"Python, Java, JS, Go, .NET",lc:1,compat:"Linux, macOS, Windows",url:"https://neo4j.com",src:"https://github.com/neo4j/neo4j"},
-  {name:"Memgraph",tagline:"Real-time in-memory graph platform",vector:1,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,ram:1,persistence:1,server:1,embeddable:0,traversal:1,hybrid:0,rag:1,cypher:1,langs:"Python, JS, C++, Rust, Go",lc:1,compat:"Linux, macOS (Docker), Windows (Docker)",url:"https://memgraph.com",src:"https://github.com/memgraph/memgraph",
-    notes:{embeddable:"In-memory server; not embeddable in the SQLite sense — requires a server process",persistence:"Persists via periodic snapshots and WAL; primarily in-memory — recent in-flight writes may be lost on unexpected crash"}},
-  {name:"TigerGraph",tagline:"Scalable graph analytics platform",vector:1,graph:1,oss:0,selfhost:1,lightweight:0,docker:1,single:0,lowops:0,ram:0,persistence:1,server:1,embeddable:0,traversal:1,hybrid:1,rag:1,cypher:0,langs:"Python, Java, REST",lc:0,compat:"Linux, Cloud",url:"https://tigergraph.com",src:""},
-  {name:"Amazon Neptune",tagline:"Managed graph database service",vector:1,graph:1,oss:0,selfhost:0,lightweight:0,docker:0,single:0,lowops:1,ram:0,persistence:1,server:1,embeddable:0,traversal:1,hybrid:0,rag:0,cypher:0,langs:"Python, Java, JS, Go",lc:0,compat:"AWS Cloud only",url:"https://aws.amazon.com/neptune/",src:""},
-  {name:"FalkorDB",tagline:"Graph DB with vector search for AI",vector:1,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,ram:1,persistence:1,server:1,embeddable:0,traversal:1,hybrid:1,rag:1,cypher:1,langs:"Python, JS, Java, Go, Rust",lc:1,compat:"Linux, macOS, Windows",url:"https://falkordb.com",src:"https://github.com/FalkorDB/FalkorDB",
-    notes:{ram:"Built on Redis; data is RAM-first with optional AOF/RDB persistence",persistence:"Relies on Redis AOF/RDB persistence; must be explicitly enabled in Redis config — not on by default"}},
-  {name:"JanusGraph",tagline:"Distributed, open-source graph DB",vector:0,graph:1,oss:1,selfhost:1,lightweight:0,docker:1,single:0,lowops:0,ram:0,persistence:1,server:1,embeddable:0,traversal:1,hybrid:0,rag:0,cypher:0,langs:"Java, Python, Gremlin",lc:0,compat:"Linux, macOS, Windows",url:"https://janusgraph.org",src:"https://github.com/JanusGraph/janusgraph",
-    notes:{docker:"Official image requires an external storage backend (Cassandra, HBase, or BerkeleyDB) — additional services needed alongside it"}},
-  {name:"OrientDB",tagline:"Multi-model DB (graph + document)",vector:0,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,ram:0,persistence:1,server:1,embeddable:1,traversal:1,hybrid:0,rag:0,cypher:0,langs:"Java, Python, JS, SQL-like",lc:0,compat:"Linux, macOS, Windows",url:"https://orientdb.org",src:"https://github.com/orientechnologies/orientdb"},
-  {name:"ArcadeDB",tagline:"Multi-model DB inspired by OrientDB",vector:0,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,ram:0,persistence:1,server:1,embeddable:1,traversal:1,hybrid:0,rag:0,cypher:1,langs:"Java, Python, JS, HTTP",lc:0,compat:"Linux, macOS, Windows",url:"https://arcadedb.com",src:"https://github.com/ArcadeData/arcadedb"},
-  {name:"ArangoDB",tagline:"Multi-model: graph, document, key-value",vector:1,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,ram:0,persistence:1,server:1,embeddable:0,traversal:1,hybrid:1,rag:1,cypher:0,langs:"Python, JS, Java, Go, PHP",lc:1,compat:"Linux, macOS, Windows",url:"https://arangodb.com",src:"https://github.com/arangodb/arangodb",
-    notes:{oss:"Licensed under BSL 1.1 from v3.11+ — not OSI-approved open source; converts to Apache 2.0 after 4 years"}},
-  {name:"PG + pgvector + AGE",tagline:"Postgres with graph + vector extensions",vector:1,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,ram:0,persistence:1,server:1,embeddable:0,traversal:1,hybrid:1,rag:1,cypher:1,langs:"All Postgres clients",lc:1,compat:"Linux, macOS, Windows",url:"https://github.com/apache/age",src:"https://github.com/apache/age",
-    notes:{cypher:"Cypher support via Apache AGE — implementation is partial; not all Cypher clauses or functions are supported"}},
-  {name:"CozoDB",tagline:"Embeddable, relational-graph-vector DB",vector:1,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,ram:0,persistence:1,server:1,embeddable:1,traversal:1,hybrid:1,rag:1,cypher:0,langs:"Python, JS, Java, Rust",lc:1,compat:"Linux, macOS, Windows",url:"https://cozodb.org",src:"https://github.com/cozodb/cozo",
-    notes:{embeddable:"Backend is configurable: in-memory, SQLite, or RocksDB",persistence:"Depends on backend; SQLite and RocksDB backends are durable"}},
-  {name:"Vespa",tagline:"Enterprise search + vector + analytics",vector:1,graph:0,oss:1,selfhost:1,lightweight:0,docker:1,single:1,lowops:0,ram:0,persistence:1,server:1,embeddable:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Java, Python, Rust, JS",lc:1,compat:"Linux, macOS (Docker)",url:"https://vespa.ai",src:"https://github.com/vespa-engine/vespa"},
-  {name:"SurrealDB",tagline:"Multi-model: graph, doc, vector, SQL",vector:1,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,ram:0,persistence:1,server:1,embeddable:1,traversal:1,hybrid:1,rag:1,cypher:0,langs:"Python, JS, Rust, Go, .NET, Java",lc:1,compat:"Linux, macOS, Windows",url:"https://surrealdb.com",src:"https://github.com/surrealdb/surrealdb",
-    notes:{embeddable:"Embedded mode available via the embedded feature flag in Rust/Python"}},
-];
+let dbs = [];
+
+function parseCSVLine(line) {
+  const fields = [];
+  let i = 0, n = line.length;
+  while (i <= n) {
+    if (i === n) { fields.push(''); break; }
+    if (line[i] === '"') {
+      i++;
+      let val = '';
+      while (i < n) {
+        if (line[i] === '"') {
+          if (i + 1 < n && line[i + 1] === '"') { val += '"'; i += 2; }
+          else { i++; break; }
+        } else {
+          val += line[i++];
+        }
+      }
+      fields.push(val);
+      if (i < n && line[i] === ',') i++;
+    } else {
+      const end = line.indexOf(',', i);
+      if (end === -1) { fields.push(line.slice(i)); break; }
+      fields.push(line.slice(i, end));
+      i = end + 1;
+    }
+  }
+  return fields;
+}
+
+const BOOL_KEYS = ['vector','graph','oss','selfhost','lightweight','docker','single','lowops','ram','persistence','server','embeddable','traversal','hybrid','rag','cypher','lc'];
+
+function parseCSV(text) {
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim().split('\n');
+  const headers = parseCSVLine(lines[0]);
+  return lines.slice(1).filter(l => l.trim()).map(line => {
+    const vals = parseCSVLine(line);
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = vals[i] !== undefined ? vals[i] : '');
+    BOOL_KEYS.forEach(k => { if (k in obj) obj[k] = parseInt(obj[k]) || 0; });
+    obj.notes = obj.notes ? JSON.parse(obj.notes) : undefined;
+    return obj;
+  });
+}
 
 const boolCols = [
   {key:"vector",label:"Vector DB"},
@@ -711,6 +719,13 @@ document.querySelectorAll('th[data-col]').forEach(th => {
   };
 });
 
+document.getElementById('csvBtn').onclick = () => {
+  const blob = new Blob([window.DB_CSV_DATA], { type: 'text/csv' });
+  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'db_comparison.csv' });
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+
 document.getElementById('q').oninput = render;
 document.getElementById('resetBtn').onclick = () => {
   Object.keys(filterState).forEach(k => filterState[k] = null);
@@ -719,6 +734,7 @@ document.getElementById('resetBtn').onclick = () => {
   renderPills(); renderColPills(); render();
 };
 
+dbs = parseCSV(window.DB_CSV_DATA);
 renderPills();
 renderColPills();
 render();

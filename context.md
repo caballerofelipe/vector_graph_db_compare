@@ -106,23 +106,34 @@ A green "on" dot turns orange when the feature has a caveat worth knowing. Hover
 
 ---
 
-## Pending changes (not yet implemented)
+## Completed changes
 
 ### CSV-driven data
-- Extract all DB records out of the HTML into a separate **`db_comparison.csv`** file
-- Both files live in the same directory; HTML loads the CSV via `fetch()` on page load with a relative path
-- No DB data should be hardcoded in the JS — everything comes from the CSV
-- **CSV format:**
-  - Header row uses the JS data keys: `name, tagline, vector, graph, oss, selfhost, lightweight, docker, single, lowops, ram, persistence, server, embeddable, traversal, hybrid, rag, cypher, langs, lc, compat, url, src, notes`
-  - Boolean columns: `1` = yes, `0` = no
-  - String columns (`langs`, `compat`, `url`, `src`, `tagline`): plain text, double-quoted if they contain commas
-  - **`notes` column**: JSON-encoded object keyed by column name, double-quoted and CSV-escaped. Example: `"{""embeddable"":""Embedded mode available; server mode also supported"",""ram"":""RAM-first by design""}"`
-  - Empty notes: leave the cell empty or `{}`
-  - Add a link to allow the user to download the CSV directly for their usage
+All DB records live in `db_comparison_data.js` as a CSV string (`window.DB_CSV_DATA`). The HTML parses it on load via a lightweight CSV parser (handles quoted fields and `""` escaping). The `↓ CSV` button in the header generates a download on the fly from the same string via a Blob — no static CSV file needed. To update data: edit `db_comparison_data.js` only.
+
+**CSV format used:**
+- Header row keys: `name, tagline, vector, graph, oss, selfhost, lightweight, docker, single, lowops, ram, persistence, server, embeddable, traversal, hybrid, rag, cypher, langs, lc, compat, url, src, notes`
+- Boolean columns: `1` / `0`
+- String columns: plain text, double-quoted when they contain commas
+- `notes` column: JSON object, double-quoted and CSV-escaped (`""` inside). Empty rows leave the cell blank.
+
+---
+
+## Pending changes (not yet implemented)
+
+### Persisted view state (localStorage)
+- Save and restore the user's last view state across page loads using `localStorage`
+- State to persist:
+  - **Search bar text** — restore the text input value on load and re-apply the filter
+  - **Filter pill states** — restore each pill's three-state value (none / require / exclude) and re-apply the row filter
+  - **Column visibility** — restore which columns are toggled on/off (the full visibility map, not just the delta from default)
+- Save to localStorage on every change (search input, pill click, column toggle); restore on `DOMContentLoaded`
+- No UI needed — purely automatic; the page should just look like the user left it
 
 ---
 
 ## Files delivered
 
-- `db_comparison_table.html` — single self-contained file, open in any browser
+- `db_comparison_table.html` — main page; loads data from `db_comparison_data.js`
+- `db_comparison_data.js` — single source of truth for all DB records (CSV as a JS template literal string exposed as `window.DB_CSV_DATA`)
 - `context.md` — this file
