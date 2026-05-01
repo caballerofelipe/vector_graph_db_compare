@@ -10,7 +10,9 @@ A self-contained, interactive HTML file (`db_comparison_table.html`) comparing 2
 - **Hover tooltips** on every column header and every filter pill (JS-driven fixed-position `div` with document-level event delegation)
 - **Cell-level caveat notes** — boolean cells with a nuance show an orange dot instead of green; hovering reveals the note. Only "on" cells with genuine caveats get this treatment; "off" cells never show a note indicator.
 - **Light/dark theme toggle** — three-state (System / Light / Dark), defaults to system `prefers-color-scheme`
-- **Column visibility toggle** — collapsible `COLUMNS ▶` section in the controls panel. Columns grouped by category (Info, Type, Deployment, Storage, Capabilities, Integrations, Links). Header shows `(N/22 shown)` count when any are hidden. Table `min-width` is computed dynamically from visible column widths so horizontal scroll shrinks with the table. DB Name is always visible; all other 22 columns are toggleable. "Reset all" restores to the default visible set.
+- **Column visibility toggle** — collapsible `COLUMNS ▶` section in the controls panel. Columns grouped by category (Info, Type, Deployment, Storage, Capabilities, Integrations, Links). Header shows `(N/22 shown)` count when any are hidden, plus **All** / **None** buttons to select or deselect every column at once. Table `min-width` is computed dynamically from visible column widths so horizontal scroll shrinks with the table. DB Name is always visible; all other 22 columns are toggleable. "Reset all" restores to the default visible set.
+- **Persisted view state** — search text, filter pill states, and column visibility are saved to `localStorage` (key `dbcmp`) on every change and restored on page load. No UI needed; the page just looks like the user left it.
+- **CSV export** — `↓ CSV` button in the header downloads the data on the fly from the same in-memory string via a Blob.
 
 ---
 
@@ -106,34 +108,11 @@ A green "on" dot turns orange when the feature has a caveat worth knowing. Hover
 
 ---
 
-## Completed changes
-
-### CSV-driven data
-All DB records live in `db_comparison_data.js` as a CSV string (`window.DB_CSV_DATA`). The HTML parses it on load via a lightweight CSV parser (handles quoted fields and `""` escaping). The `↓ CSV` button in the header generates a download on the fly from the same string via a Blob — no static CSV file needed. To update data: edit `db_comparison_data.js` only.
-
-**CSV format used:**
-- Header row keys: `name, tagline, vector, graph, oss, selfhost, lightweight, docker, single, lowops, ram, persistence, server, embeddable, traversal, hybrid, rag, cypher, langs, lc, compat, url, src, notes`
-- Boolean columns: `1` / `0`
-- String columns: plain text, double-quoted when they contain commas
-- `notes` column: JSON object, double-quoted and CSV-escaped (`""` inside). Empty rows leave the cell blank.
-
----
-
-## Pending changes (not yet implemented)
-
-### Persisted view state (localStorage)
-- Save and restore the user's last view state across page loads using `localStorage`
-- State to persist:
-  - **Search bar text** — restore the text input value on load and re-apply the filter
-  - **Filter pill states** — restore each pill's three-state value (none / require / exclude) and re-apply the row filter
-  - **Column visibility** — restore which columns are toggled on/off (the full visibility map, not just the delta from default)
-- Save to localStorage on every change (search input, pill click, column toggle); restore on `DOMContentLoaded`
-- No UI needed — purely automatic; the page should just look like the user left it
-
----
-
 ## Files delivered
 
 - `db_comparison_table.html` — main page; loads data from `db_comparison_data.js`
-- `db_comparison_data.js` — single source of truth for all DB records (CSV as a JS template literal string exposed as `window.DB_CSV_DATA`)
+- `db_comparison_data.js` — single source of truth for all DB records; CSV string exposed as `window.DB_CSV_DATA`, parsed on load. To update data: edit this file only.
+  - Header row keys: `name, tagline, vector, graph, oss, selfhost, lightweight, docker, single, lowops, ram, persistence, server, embeddable, traversal, hybrid, rag, cypher, langs, lc, compat, url, src, notes`
+  - Boolean columns: `1` / `0`; string columns: plain text, double-quoted when containing commas
+  - `notes` column: JSON object, double-quoted and CSV-escaped (`""` inside); blank for rows with no caveats
 - `context.md` — this file

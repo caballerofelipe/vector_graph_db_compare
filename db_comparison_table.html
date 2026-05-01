@@ -370,6 +370,20 @@
     user-select: none;
   }
   .col-section-hdr:hover .filter-label { color: var(--text); }
+  .btn-col {
+    background: var(--surface2);
+    border: 0.5px solid var(--border2);
+    border-radius: 6px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 3px 8px;
+    cursor: pointer;
+    transition: all .15s;
+    line-height: 1;
+    user-select: none;
+  }
+  .btn-col:hover { color: var(--text); border-color: var(--border2); background: var(--border); }
   .col-arrow {
     font-size: 9px;
     color: var(--muted);
@@ -427,6 +441,8 @@
     <div class="col-section">
       <div class="col-section-hdr" id="colHdr">
         <div class="filter-label" style="margin:0">COLUMNS <span id="colCount" style="font-weight:400"></span></div>
+        <button class="btn-col" id="colAllBtn">All</button>
+        <button class="btn-col" id="colNoneBtn">None</button>
         <span class="col-arrow" id="colArrow">▶</span>
       </div>
       <div class="col-section-body" id="colBody"></div>
@@ -599,7 +615,7 @@ function renderPills() {
       } else {
         filterState[c.key] = null;
       }
-      renderPills(); render();
+      saveState(); renderPills(); render();
     };
     container.appendChild(p);
   });
@@ -640,6 +656,7 @@ document.getElementById('colBody').addEventListener('click', e => {
   const k = p.dataset.colk;
   colVisibility[k] = !colVisibility[k];
   if (!colVisibility[k] && filterState[k] !== undefined) filterState[k] = null;
+  saveState();
   renderColPills();
   renderPills();
   render();
@@ -648,6 +665,21 @@ document.getElementById('colBody').addEventListener('click', e => {
 document.getElementById('colHdr').addEventListener('click', () => {
   document.getElementById('colArrow').classList.toggle('open');
   document.getElementById('colBody').classList.toggle('open');
+});
+
+document.getElementById('colAllBtn').addEventListener('click', e => {
+  e.stopPropagation();
+  Object.keys(colVisibility).forEach(k => colVisibility[k] = true);
+  saveState(); renderColPills(); renderPills(); render();
+});
+
+document.getElementById('colNoneBtn').addEventListener('click', e => {
+  e.stopPropagation();
+  Object.keys(colVisibility).forEach(k => {
+    colVisibility[k] = false;
+    if (filterState[k] !== undefined) filterState[k] = null;
+  });
+  saveState(); renderColPills(); renderPills(); render();
 });
 
 let sortCol = 'name', sortDir = 1;
@@ -726,15 +758,37 @@ document.getElementById('csvBtn').onclick = () => {
   URL.revokeObjectURL(a.href);
 };
 
-document.getElementById('q').oninput = render;
+document.getElementById('q').oninput = () => { saveState(); render(); };
 document.getElementById('resetBtn').onclick = () => {
   Object.keys(filterState).forEach(k => filterState[k] = null);
   Object.keys(colVisibility).forEach(k => colVisibility[k] = colDefaultVisible.has(k));
   document.getElementById('q').value = '';
-  renderPills(); renderColPills(); render();
+  saveState(); renderPills(); renderColPills(); render();
 };
 
+function saveState() {
+  localStorage.setItem('dbcmp', JSON.stringify({
+    q: document.getElementById('q').value,
+    filters: {...filterState},
+    cols: {...colVisibility},
+  }));
+}
+
+function loadState() {
+  let saved;
+  try { saved = JSON.parse(localStorage.getItem('dbcmp')); } catch(e) {}
+  if (!saved) return;
+  if (saved.q) document.getElementById('q').value = saved.q;
+  if (saved.filters) Object.keys(saved.filters).forEach(k => {
+    if (k in filterState) filterState[k] = saved.filters[k];
+  });
+  if (saved.cols) Object.keys(saved.cols).forEach(k => {
+    if (k in colVisibility) colVisibility[k] = !!saved.cols[k];
+  });
+}
+
 dbs = parseCSV(window.DB_CSV_DATA);
+loadState();
 renderPills();
 renderColPills();
 render();
