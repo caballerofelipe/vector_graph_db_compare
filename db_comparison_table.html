@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DB Comparison Table</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161d;
+    --surface2: #1a1e28;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --accent: #4ade80;
+    --accent2: #60a5fa;
+    --accent3: #f472b6;
+    --yes: #4ade80;
+    --no: #2a2f3d;
+    --no-text: #3d4455;
+    --pill-on: #4ade80;
+    --pill-on-text: #052e16;
+    --pill-off: #1a1e28;
+    --pill-off-text: #6b7280;
+    --header-bg: #0d0f14;
+    --row-hover: rgba(74,222,128,0.04);
+    --mono: 'Space Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+    min-height: 100vh;
+  }
+
+  .page {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 32px 24px;
+  }
+
+  .header {
+    margin-bottom: 28px;
+  }
+
+  .header h1 {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+  }
+
+  .header h1 span { color: var(--accent); }
+
+  .header p {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 300;
+  }
+
+  .controls {
+    background: var(--surface);
+    border: 0.5px solid var(--border2);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 16px;
+  }
+
+  .controls-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .search-wrap {
+    flex: 1;
+    min-width: 180px;
+    position: relative;
+  }
+
+  .search-wrap svg {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    pointer-events: none;
+  }
+
+  input[type=text] {
+    width: 100%;
+    background: var(--surface2);
+    border: 0.5px solid var(--border2);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+    padding: 8px 12px 8px 34px;
+    outline: none;
+    transition: border-color .15s;
+  }
+
+  input[type=text]:focus { border-color: rgba(74,222,128,0.4); }
+  input[type=text]::placeholder { color: var(--muted); }
+
+  .btn-reset {
+    background: var(--surface2);
+    border: 0.5px solid var(--border2);
+    border-radius: 8px;
+    color: var(--muted);
+    font-family: var(--sans);
+    font-size: 12px;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .btn-reset:hover { color: var(--text); border-color: var(--border2); background: var(--border); }
+
+  .filter-label {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--mono);
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  .pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .pill {
+    font-size: 11px;
+    padding: 4px 11px;
+    border-radius: 20px;
+    cursor: pointer;
+    border: 0.5px solid var(--border2);
+    background: var(--pill-off);
+    color: var(--pill-off-text);
+    user-select: none;
+    transition: all .15s;
+    font-family: var(--sans);
+  }
+
+  .pill:hover { border-color: rgba(74,222,128,0.3); color: var(--text); }
+  .pill.on { background: rgba(74,222,128,0.15); color: var(--yes); border-color: rgba(74,222,128,0.35); }
+
+  .stats {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--mono);
+    margin-bottom: 10px;
+  }
+
+  .stats strong { color: var(--accent); }
+
+  .tbl-wrap {
+    overflow-x: auto;
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    table-layout: fixed;
+    min-width: 1400px;
+  }
+
+  th {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    padding: 10px 10px;
+    text-align: left;
+    border-bottom: 0.5px solid var(--border2);
+    cursor: pointer;
+    position: sticky;
+    top: 0;
+    background: var(--header-bg);
+    z-index: 2;
+    user-select: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color .12s;
+  }
+
+  th:hover { color: var(--text); }
+  th.active { color: var(--accent); }
+  th .arr { margin-left: 3px; opacity: 0.6; font-size: 9px; }
+  th.active .arr { opacity: 1; }
+
+  td {
+    padding: 9px 10px;
+    border-bottom: 0.5px solid var(--border);
+    color: var(--text);
+    vertical-align: middle;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--row-hover); }
+
+  .yes-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--yes);
+    box-shadow: 0 0 5px rgba(74,222,128,0.5);
+  }
+
+  .no-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--no);
+    border: 0.5px solid var(--no-text);
+  }
+
+  .db-name {
+    font-weight: 600;
+    color: var(--text);
+    font-size: 12px;
+  }
+
+  .tagline {
+    color: var(--muted);
+    font-size: 11px;
+  }
+
+  .langs-cell {
+    color: var(--muted);
+    font-size: 11px;
+  }
+
+  .compat-cell {
+    color: var(--muted);
+    font-size: 11px;
+  }
+
+  a { color: var(--accent2); text-decoration: none; font-size: 11px; }
+  a:hover { text-decoration: underline; }
+  a.src-link { color: var(--muted); }
+  a.src-link:hover { color: var(--text); }
+
+  .col-db   { width: 120px; }
+  .col-tag  { width: 175px; }
+  .col-bool { width: 46px; text-align: center; }
+  .col-pl   { width: 130px; }
+  .col-oc   { width: 130px; }
+  .col-url  { width: 55px; text-align: center; }
+  .col-src  { width: 55px; text-align: center; }
+
+  /* scrollbar */
+  .tbl-wrap::-webkit-scrollbar { height: 4px; }
+  .tbl-wrap::-webkit-scrollbar-track { background: transparent; }
+  .tbl-wrap::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  #tooltip {
+    position: fixed;
+    background: #1e2330;
+    color: #e8eaf0;
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.5;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 0.5px solid rgba(255,255,255,0.15);
+    white-space: normal;
+    max-width: 220px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .15s;
+    z-index: 9999;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+  }
+  [data-tip] { cursor: default; }
+</style>
+</head>
+<body>
+<div id="tooltip"></div>
+<div class="page">
+
+  <div class="header">
+    <h1>DB <span>Comparison</span> Table</h1>
+    <p>25 databases — vector, graph, and multi-model. Sort any column, filter by feature.</p>
+  </div>
+
+  <div class="controls">
+    <div class="controls-row">
+      <div class="search-wrap">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" id="q" placeholder="Search by name, tagline, language, OS..." />
+      </div>
+      <button class="btn-reset" id="resetBtn">Reset all</button>
+    </div>
+    <div class="filter-label">REQUIRE FEATURE</div>
+    <div class="pills" id="pills"></div>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="tbl-wrap">
+  <table id="tbl">
+  <thead>
+  <tr>
+    <th class="col-db" data-col="name" data-tip="The name of the database or database combination.">DB NAME <span class="arr">↕</span></th>
+    <th class="col-tag" data-col="tagline" data-tip="A short description of the database's primary purpose and positioning.">TAGLINE <span class="arr">↕</span></th>
+    <th class="col-bool" data-col="vector" data-tip="Vector DB — stores and queries high-dimensional embeddings for semantic / similarity search. Core feature for AI and RAG apps.">VEC <span class="arr">↕</span></th>
+    <th class="col-bool" data-col="graph" data-tip="Graph DB — models data as nodes and edges, optimized for traversing relationships between entities (e.g. knowledge graphs, fraud detection).">GRAPH <span class="arr">↕</span></th>
+    <th class="col-bool" data-col="oss" data-tip="Open Source — source code is publicly available under an OSI-approved license. Allows self-hosting, auditing, and forking.">OSS <span class="arr">↕</span></th>
+    <th class="col-bool" data-col="selfhost" data-tip="Self-hosted — can be deployed on your own servers or cloud account, giving full control over data, privacy, and cost.">SELF-H <span class="arr">↕</span></th>
+    <th class="col-bool" data-col="lightweight" data-tip="Lightweight deployment — runs with minimal CPU/RAM; suitable for laptops, edge devices, or small servers without heavy infrastructure.">LIGHT <span class="arr">↕</span></th>
+    <th class="col-bool" data-col="docker" data-tip="Docker support — an official Docker image is available, making containerized local or cloud deployment straightforward.">DOCK <span class="arr">↕</span></th>
+    <th class="col-bool" data-col="single" data-tip="Single-node operation — can run fully on one machine without requiring a distributed cluster or external coordination service.">1-NODE <span class="arr">↕</span></th>
+    <th class="col-bool" data-col="lowops" data-tip="Low operational overhead — minimal ongoing maintenance, tuning, and infrastructure management required to keep it running reliably.">LOW-OPS <span class="arr">↕</span></th>
+    <th class="col-bool" data-col="filebased" data-tip="File-based / embedded storage — runs in-process and stores data in local files (SQLite-style). No separate server process needed.">FILE <span class="arr">↕</span></th>
+    <th class="col-bool" data-col="traversal" data-tip="Graph traversal — supports multi-hop relationship queries and path-finding through connected data (e.g. shortest path, neighbor walks).">TRAV <span class="arr">↕</span></th>
+    <th class="col-bool" data-col="hybrid" data-tip="Hybrid search — combines vector similarity search with keyword / BM25 full-text search in one query for better retrieval accuracy.">HYBRID <span class="arr">↕</span></th>
+    <th class="col-bool" data-col="rag" data-tip="RAG pipeline support — integrates well as the retrieval layer in Retrieval-Augmented Generation workflows for LLM-based applications.">RAG <span class="arr">↕</span></th>
+    <th class="col-bool" data-col="cypher" data-tip="Cypher query language — supports Cypher, the declarative graph query language popularized by Neo4j and adopted across several graph DBs.">CYPHER <span class="arr">↕</span></th>
+    <th class="col-pl" data-col="langs" data-tip="Languages — official client libraries or SDKs available for these programming languages.">LANGUAGES <span class="arr">↕</span></th>
+    <th class="col-bool" data-col="lc" data-tip="LangChain / LlamaIndex — has a native integration with LangChain or LlamaIndex, the two most popular LLM orchestration frameworks.">LC/LI <span class="arr">↕</span></th>
+    <th class="col-oc" data-col="compat" data-tip="OS compatibility — operating systems on which this DB can be natively installed or run (without Docker workarounds).">OS COMPAT <span class="arr">↕</span></th>
+    <th class="col-url" data-tip="Link to the official product or project website.">URL</th>
+    <th class="col-src" data-tip="Link to the public source code repository on GitHub or equivalent.">SOURCE</th>
+  </tr>
+  </thead>
+  <tbody id="tbody"></tbody>
+  </table>
+  </div>
+
+</div>
+
+<script>
+const Y = '<span class="yes-dot"></span>';
+const N = '<span class="no-dot"></span>';
+
+const dbs = [
+  {name:"Qdrant",tagline:"High-perf vector search engine",vector:1,graph:0,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,filebased:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, Go, JS, Rust",lc:1,compat:"Linux, macOS, Windows",url:"https://qdrant.tech",src:"https://github.com/qdrant/qdrant"},
+  {name:"Chroma",tagline:"AI-native open-source embedding DB",vector:1,graph:0,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,filebased:1,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, JS/TS",lc:1,compat:"Linux, macOS, Windows",url:"https://trychroma.com",src:"https://github.com/chroma-core/chroma"},
+  {name:"Weaviate",tagline:"AI-native vector database",vector:1,graph:0,oss:1,selfhost:1,lightweight:0,docker:1,single:1,lowops:0,filebased:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, Go, JS, Java",lc:1,compat:"Linux, macOS, Windows",url:"https://weaviate.io",src:"https://github.com/weaviate/weaviate"},
+  {name:"Milvus",tagline:"Cloud-native vector DB for scale",vector:1,graph:0,oss:1,selfhost:1,lightweight:0,docker:1,single:0,lowops:0,filebased:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, Java, Go, JS",lc:1,compat:"Linux, macOS, Windows",url:"https://milvus.io",src:"https://github.com/milvus-io/milvus"},
+  {name:"Pinecone",tagline:"Fully managed vector database",vector:1,graph:0,oss:0,selfhost:0,lightweight:1,docker:0,single:0,lowops:1,filebased:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, JS, Go, Java",lc:1,compat:"Cloud (SaaS)",url:"https://pinecone.io",src:""},
+  {name:"LanceDB",tagline:"Serverless vector DB for AI apps",vector:1,graph:0,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,filebased:1,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, JS/TS, Rust",lc:1,compat:"Linux, macOS, Windows",url:"https://lancedb.com",src:"https://github.com/lancedb/lancedb"},
+  {name:"pgvector",tagline:"Vector similarity search for Postgres",vector:1,graph:0,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,filebased:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"All Postgres clients",lc:1,compat:"Linux, macOS, Windows",url:"https://github.com/pgvector/pgvector",src:"https://github.com/pgvector/pgvector"},
+  {name:"pgvectorscale",tagline:"High-perf vector search on Postgres",vector:1,graph:0,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,filebased:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"All Postgres clients",lc:1,compat:"Linux, macOS",url:"https://github.com/timescale/pgvectorscale",src:"https://github.com/timescale/pgvectorscale"},
+  {name:"FAISS",tagline:"Efficient similarity search library (Meta)",vector:1,graph:0,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,filebased:1,traversal:0,hybrid:0,rag:0,cypher:0,langs:"Python, C++",lc:1,compat:"Linux, macOS, Windows",url:"https://faiss.ai",src:"https://github.com/facebookresearch/faiss"},
+  {name:"Elasticsearch",tagline:"Distributed search & analytics engine",vector:1,graph:0,oss:0,selfhost:1,lightweight:0,docker:1,single:1,lowops:0,filebased:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, Java, JS, Go, Ruby",lc:1,compat:"Linux, macOS, Windows",url:"https://elastic.co",src:"https://github.com/elastic/elasticsearch"},
+  {name:"MongoDB Atlas Vector",tagline:"Document DB with vector search",vector:1,graph:0,oss:0,selfhost:0,lightweight:0,docker:0,single:0,lowops:1,filebased:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, JS, Java, Go, C#",lc:1,compat:"Cloud (SaaS)",url:"https://www.mongodb.com/products/platform/atlas-vector-search",src:""},
+  {name:"Redis Vector",tagline:"In-memory DB with vector search",vector:1,graph:0,oss:0,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,filebased:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, JS, Java, Go, C#",lc:1,compat:"Linux, macOS, Windows",url:"https://redis.io/docs/latest/develop/get-started/vector-database/",src:"https://github.com/redis/redis"},
+  {name:"Neo4j",tagline:"Native graph database platform",vector:1,graph:1,oss:0,selfhost:1,lightweight:0,docker:1,single:1,lowops:0,filebased:0,traversal:1,hybrid:1,rag:1,cypher:1,langs:"Python, Java, JS, Go, .NET",lc:1,compat:"Linux, macOS, Windows",url:"https://neo4j.com",src:"https://github.com/neo4j/neo4j"},
+  {name:"Memgraph",tagline:"Real-time in-memory graph platform",vector:1,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,filebased:0,traversal:1,hybrid:0,rag:1,cypher:1,langs:"Python, JS, C++, Rust, Go",lc:1,compat:"Linux, macOS (Docker), Windows (Docker)",url:"https://memgraph.com",src:"https://github.com/memgraph/memgraph"},
+  {name:"TigerGraph",tagline:"Scalable graph analytics platform",vector:1,graph:1,oss:0,selfhost:1,lightweight:0,docker:1,single:0,lowops:0,filebased:0,traversal:1,hybrid:1,rag:1,cypher:0,langs:"Python, Java, REST",lc:0,compat:"Linux, Cloud",url:"https://tigergraph.com",src:""},
+  {name:"Amazon Neptune",tagline:"Managed graph database service",vector:1,graph:1,oss:0,selfhost:0,lightweight:0,docker:0,single:0,lowops:1,filebased:0,traversal:1,hybrid:0,rag:0,cypher:0,langs:"Python, Java, JS, Go",lc:0,compat:"AWS Cloud only",url:"https://aws.amazon.com/neptune/",src:""},
+  {name:"FalkorDB",tagline:"Graph DB with vector search for AI",vector:1,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,filebased:0,traversal:1,hybrid:1,rag:1,cypher:1,langs:"Python, JS, Java, Go, Rust",lc:1,compat:"Linux, macOS, Windows",url:"https://falkordb.com",src:"https://github.com/FalkorDB/FalkorDB"},
+  {name:"JanusGraph",tagline:"Distributed, open-source graph DB",vector:0,graph:1,oss:1,selfhost:1,lightweight:0,docker:1,single:0,lowops:0,filebased:0,traversal:1,hybrid:0,rag:0,cypher:0,langs:"Java, Python, Gremlin",lc:0,compat:"Linux, macOS, Windows",url:"https://janusgraph.org",src:"https://github.com/JanusGraph/janusgraph"},
+  {name:"OrientDB",tagline:"Multi-model DB (graph + document)",vector:0,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,filebased:1,traversal:1,hybrid:0,rag:0,cypher:0,langs:"Java, Python, JS, SQL-like",lc:0,compat:"Linux, macOS, Windows",url:"https://orientdb.org",src:"https://github.com/orientechnologies/orientdb"},
+  {name:"ArcadeDB",tagline:"Multi-model DB inspired by OrientDB",vector:0,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,filebased:1,traversal:1,hybrid:0,rag:0,cypher:1,langs:"Java, Python, JS, HTTP",lc:0,compat:"Linux, macOS, Windows",url:"https://arcadedb.com",src:"https://github.com/ArcadeData/arcadedb"},
+  {name:"ArangoDB",tagline:"Multi-model: graph, document, key-value",vector:1,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,filebased:0,traversal:1,hybrid:1,rag:1,cypher:0,langs:"Python, JS, Java, Go, PHP",lc:1,compat:"Linux, macOS, Windows",url:"https://arangodb.com",src:"https://github.com/arangodb/arangodb"},
+  {name:"PG + pgvector + AGE",tagline:"Postgres with graph + vector extensions",vector:1,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,filebased:0,traversal:1,hybrid:1,rag:1,cypher:1,langs:"All Postgres clients",lc:1,compat:"Linux, macOS, Windows",url:"https://github.com/apache/age",src:"https://github.com/apache/age"},
+  {name:"CozoDB",tagline:"Embeddable, relational-graph-vector DB",vector:1,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,filebased:1,traversal:1,hybrid:1,rag:1,cypher:0,langs:"Python, JS, Java, Rust",lc:1,compat:"Linux, macOS, Windows",url:"https://cozodb.org",src:"https://github.com/cozodb/cozo"},
+  {name:"Vespa",tagline:"Enterprise search + vector + analytics",vector:1,graph:0,oss:1,selfhost:1,lightweight:0,docker:1,single:1,lowops:0,filebased:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Java, Python, Rust, JS",lc:1,compat:"Linux, macOS (Docker)",url:"https://vespa.ai",src:"https://github.com/vespa-engine/vespa"},
+  {name:"SurrealDB",tagline:"Multi-model: graph, doc, vector, SQL",vector:1,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,filebased:1,traversal:1,hybrid:1,rag:1,cypher:0,langs:"Python, JS, Rust, Go, .NET, Java",lc:1,compat:"Linux, macOS, Windows",url:"https://surrealdb.com",src:"https://github.com/surrealdb/surrealdb"},
+];
+
+const boolCols = [
+  {key:"vector",label:"Vector DB"},
+  {key:"graph",label:"Graph DB"},
+  {key:"oss",label:"Open source"},
+  {key:"selfhost",label:"Self-hosted"},
+  {key:"lightweight",label:"Lightweight"},
+  {key:"docker",label:"Docker"},
+  {key:"single",label:"Single-node"},
+  {key:"lowops",label:"Low ops"},
+  {key:"filebased",label:"File-based"},
+  {key:"traversal",label:"Graph traversal"},
+  {key:"hybrid",label:"Hybrid search"},
+  {key:"rag",label:"RAG support"},
+  {key:"cypher",label:"Cypher query"},
+  {key:"lc",label:"LangChain/LI"},
+];
+
+const filterState = {};
+boolCols.forEach(c => filterState[c.key] = null);
+
+function renderPills() {
+  const container = document.getElementById('pills');
+  container.innerHTML = '';
+  boolCols.forEach(c => {
+    const p = document.createElement('span');
+    p.className = 'pill' + (filterState[c.key] === true ? ' on' : '');
+    p.textContent = c.label;
+    p.onclick = () => {
+      filterState[c.key] = filterState[c.key] === true ? null : true;
+      renderPills(); render();
+    };
+    container.appendChild(p);
+  });
+}
+
+let sortCol = 'name', sortDir = 1;
+
+function bc(v) { return v ? Y : N; }
+
+function render() {
+  const q = document.getElementById('q').value.toLowerCase().trim();
+  let rows = [...dbs];
+  Object.keys(filterState).forEach(k => {
+    if (filterState[k] === true) rows = rows.filter(r => r[k] === 1);
+  });
+  if (q) rows = rows.filter(r => (r.name + r.tagline + r.langs + r.compat).toLowerCase().includes(q));
+  rows.sort((a, b) => {
+    let av = a[sortCol], bv = b[sortCol];
+    if (typeof av === 'number') return sortDir * (av - bv);
+    return sortDir * String(av || '').localeCompare(String(bv || ''));
+  });
+  const active = rows.length, total = dbs.length;
+  document.getElementById('stats').innerHTML =
+    `Showing <strong>${active}</strong> of ${total} databases`;
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = rows.map(r => `<tr>
+    <td class="col-db db-name">${r.name}</td>
+    <td class="col-tag tagline" title="${r.tagline}">${r.tagline}</td>
+    <td class="col-bool" style="text-align:center">${bc(r.vector)}</td>
+    <td class="col-bool" style="text-align:center">${bc(r.graph)}</td>
+    <td class="col-bool" style="text-align:center">${bc(r.oss)}</td>
+    <td class="col-bool" style="text-align:center">${bc(r.selfhost)}</td>
+    <td class="col-bool" style="text-align:center">${bc(r.lightweight)}</td>
+    <td class="col-bool" style="text-align:center">${bc(r.docker)}</td>
+    <td class="col-bool" style="text-align:center">${bc(r.single)}</td>
+    <td class="col-bool" style="text-align:center">${bc(r.lowops)}</td>
+    <td class="col-bool" style="text-align:center">${bc(r.filebased)}</td>
+    <td class="col-bool" style="text-align:center">${bc(r.traversal)}</td>
+    <td class="col-bool" style="text-align:center">${bc(r.hybrid)}</td>
+    <td class="col-bool" style="text-align:center">${bc(r.rag)}</td>
+    <td class="col-bool" style="text-align:center">${bc(r.cypher)}</td>
+    <td class="col-pl langs-cell" title="${r.langs}">${r.langs}</td>
+    <td class="col-bool" style="text-align:center">${bc(r.lc)}</td>
+    <td class="col-oc compat-cell" title="${r.compat}">${r.compat}</td>
+    <td class="col-url" style="text-align:center">${r.url ? `<a href="${r.url}" target="_blank">↗ site</a>` : ''}</td>
+    <td class="col-src" style="text-align:center">${r.src ? `<a href="${r.src}" target="_blank" class="src-link">↗ gh</a>` : '<span style="color:var(--no-text)">–</span>'}</td>
+  </tr>`).join('');
+}
+
+document.querySelectorAll('th[data-col]').forEach(th => {
+  th.onclick = () => {
+    const c = th.dataset.col;
+    if (sortCol === c) sortDir *= -1;
+    else { sortCol = c; sortDir = 1; }
+    document.querySelectorAll('th').forEach(t => {
+      t.classList.remove('active');
+      const arr = t.querySelector('.arr');
+      if (arr) arr.textContent = '↕';
+    });
+    th.classList.add('active');
+    th.querySelector('.arr').textContent = sortDir === 1 ? '↑' : '↓';
+    render();
+  };
+});
+
+document.getElementById('q').oninput = render;
+document.getElementById('resetBtn').onclick = () => {
+  Object.keys(filterState).forEach(k => filterState[k] = null);
+  document.getElementById('q').value = '';
+  renderPills(); render();
+};
+
+renderPills();
+render();
+
+const tip = document.getElementById('tooltip');
+document.querySelectorAll('[data-tip]').forEach(el => {
+  el.addEventListener('mouseenter', e => {
+    tip.textContent = el.dataset.tip;
+    tip.style.opacity = '1';
+    positionTip(e);
+  });
+  el.addEventListener('mousemove', positionTip);
+  el.addEventListener('mouseleave', () => { tip.style.opacity = '0'; });
+});
+function positionTip(e) {
+  const pad = 14;
+  let x = e.clientX + pad;
+  let y = e.clientY + pad;
+  if (x + 240 > window.innerWidth) x = e.clientX - 240;
+  if (y + 120 > window.innerHeight) y = e.clientY - 90;
+  tip.style.left = x + 'px';
+  tip.style.top = y + 'px';
+}
+</script>
+</body>
+</html>
