@@ -26,9 +26,38 @@
     --pill-off-text: #6b7280;
     --header-bg: #0d0f14;
     --row-hover: rgba(74,222,128,0.04);
+    --tooltip-bg: #1e2330;
+    --tooltip-text: #e8eaf0;
     --mono: 'Space Mono', monospace;
     --sans: 'DM Sans', sans-serif;
   }
+
+  /* Light theme — toggled via class on <body> at runtime, or <html> for pre-paint no-flash. */
+  body.light,
+  html.light body {
+    --bg: #f8f9fa;
+    --surface: #ffffff;
+    --surface2: #f1f3f5;
+    --border: rgba(0,0,0,0.08);
+    --border2: rgba(0,0,0,0.14);
+    --text: #111827;
+    --muted: #6b7280;
+    --accent: #16a34a;
+    --accent2: #2563eb;
+    --accent3: #db2777;
+    --yes: #16a34a;
+    --no: #e5e7eb;
+    --no-text: #9ca3af;
+    --pill-on: #16a34a;
+    --pill-on-text: #f0fdf4;
+    --pill-off: #f1f3f5;
+    --pill-off-text: #6b7280;
+    --header-bg: #ffffff;
+    --row-hover: rgba(22,163,74,0.06);
+    --tooltip-bg: #1f2937;
+    --tooltip-text: #f9fafb;
+  }
+  body.light .yes-dot { box-shadow: none; }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -127,6 +156,30 @@
     white-space: nowrap;
   }
   .btn-reset:hover { color: var(--text); border-color: var(--border2); background: var(--border); }
+
+  .btn-theme {
+    background: var(--surface2);
+    border: 0.5px solid var(--border2);
+    border-radius: 8px;
+    color: var(--muted);
+    font-family: var(--sans);
+    font-size: 12px;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+    line-height: 1;
+  }
+  .btn-theme:hover { color: var(--text); border-color: var(--border2); background: var(--border); }
+
+  .header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+  .header-top h1 { margin-bottom: 0; }
 
   .filter-label {
     font-size: 11px;
@@ -279,8 +332,8 @@
 
   #tooltip {
     position: fixed;
-    background: #1e2330;
-    color: #e8eaf0;
+    background: var(--tooltip-bg);
+    color: var(--tooltip-text);
     font-family: var(--sans);
     font-size: 12px;
     font-weight: 400;
@@ -298,13 +351,21 @@
   }
   [data-tip] { cursor: default; }
 </style>
+<script>
+  // Apply theme before first paint to avoid flash of wrong theme.
+  if (!window.matchMedia('(prefers-color-scheme: dark)').matches)
+    document.documentElement.classList.add('light');
+</script>
 </head>
 <body>
 <div id="tooltip"></div>
 <div class="page">
 
   <div class="header">
-    <h1>Vector and Graph DB <span>Comparison</span> Table</h1>
+    <div class="header-top">
+      <h1>Vector and Graph DB <span>Comparison</span> Table</h1>
+      <button class="btn-theme" id="themeBtn" aria-label="Toggle light/dark theme"></button>
+    </div>
     <p>25 databases — vector, graph, and multi-model. Sort any column, filter by feature.</p>
   </div>
 
@@ -535,6 +596,28 @@ document.addEventListener('mouseout', e => {
   // Only hide if the pointer is actually leaving the tipped element (not moving to a child).
   if (!el.contains(e.relatedTarget)) tip.style.opacity = '0';
 });
+
+// Theme toggle — three states: 'system' | 'light' | 'dark'
+const themeBtn = document.getElementById('themeBtn');
+const sysMq = window.matchMedia('(prefers-color-scheme: dark)');
+let themeMode = 'system';
+
+const modeLabel = { system: '⊙ System', light: '☀ Light', dark: '☾ Dark' };
+const nextMode  = { system: 'light', light: 'dark', dark: 'system' };
+
+function applyTheme(mode) {
+  const light = mode === 'light' || (mode === 'system' && !sysMq.matches);
+  document.body.classList.toggle('light', light);
+  document.documentElement.classList.remove('light');
+  themeBtn.textContent = modeLabel[mode];
+  themeBtn.setAttribute('aria-label', `Theme: ${mode}`);
+}
+
+applyTheme(themeMode);
+
+sysMq.addEventListener('change', () => { if (themeMode === 'system') applyTheme('system'); });
+
+themeBtn.addEventListener('click', () => { themeMode = nextMode[themeMode]; applyTheme(themeMode); });
 </script>
 </body>
 </html>
