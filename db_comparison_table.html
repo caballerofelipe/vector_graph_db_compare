@@ -157,6 +157,7 @@
 
   .pill:hover { border-color: rgba(74,222,128,0.3); color: var(--text); }
   .pill.on { background: rgba(74,222,128,0.15); color: var(--yes); border-color: rgba(74,222,128,0.35); }
+  .pill.off { background: rgba(244,114,182,0.12); color: #f472b6; border-color: rgba(244,114,182,0.4); }
 
   .stats {
     font-size: 11px;
@@ -335,7 +336,7 @@
     <th class="col-bool" data-col="docker" data-tip="Docker support — an official Docker image is available, making containerized local or cloud deployment straightforward.">DOCK <span class="arr">↕</span></th>
     <th class="col-bool" data-col="single" data-tip="Single-node operation — can run fully on one machine without requiring a distributed cluster or external coordination service.">1-NODE <span class="arr">↕</span></th>
     <th class="col-bool" data-col="lowops" data-tip="Low operational overhead — minimal ongoing maintenance, tuning, and infrastructure management required to keep it running reliably.">LOW-OPS <span class="arr">↕</span></th>
-    <th class="col-bool" data-col="filebased" data-tip="File-based / embedded storage — runs in-process and stores data in local files (SQLite-style). No separate server process needed.">FILE <span class="arr">↕</span></th>
+    <th class="col-bool" data-col="embeddable" data-tip="Embeddable — runs in-process and stores data in local files (SQLite-style). No separate server process needed.">EMBED <span class="arr">↕</span></th>
     <th class="col-bool" data-col="traversal" data-tip="Graph traversal — supports multi-hop relationship queries and path-finding through connected data (e.g. shortest path, neighbor walks).">TRAV <span class="arr">↕</span></th>
     <th class="col-bool" data-col="hybrid" data-tip="Hybrid search — combines vector similarity search with keyword / BM25 full-text search in one query for better retrieval accuracy.">HYBRID <span class="arr">↕</span></th>
     <th class="col-bool" data-col="rag" data-tip="RAG pipeline support — integrates well as the retrieval layer in Retrieval-Augmented Generation workflows for LLM-based applications.">RAG <span class="arr">↕</span></th>
@@ -358,31 +359,31 @@ const Y = '<span class="yes-dot"></span>';
 const N = '<span class="no-dot"></span>';
 
 const dbs = [
-  {name:"Qdrant",tagline:"High-perf vector search engine",vector:1,graph:0,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,filebased:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, Go, JS, Rust",lc:1,compat:"Linux, macOS, Windows",url:"https://qdrant.tech",src:"https://github.com/qdrant/qdrant"},
-  {name:"Chroma",tagline:"AI-native open-source embedding DB",vector:1,graph:0,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,filebased:1,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, JS/TS",lc:1,compat:"Linux, macOS, Windows",url:"https://trychroma.com",src:"https://github.com/chroma-core/chroma"},
-  {name:"Weaviate",tagline:"AI-native vector database",vector:1,graph:0,oss:1,selfhost:1,lightweight:0,docker:1,single:1,lowops:0,filebased:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, Go, JS, Java",lc:1,compat:"Linux, macOS, Windows",url:"https://weaviate.io",src:"https://github.com/weaviate/weaviate"},
-  {name:"Milvus",tagline:"Cloud-native vector DB for scale",vector:1,graph:0,oss:1,selfhost:1,lightweight:0,docker:1,single:0,lowops:0,filebased:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, Java, Go, JS",lc:1,compat:"Linux, macOS, Windows",url:"https://milvus.io",src:"https://github.com/milvus-io/milvus"},
-  {name:"Pinecone",tagline:"Fully managed vector database",vector:1,graph:0,oss:0,selfhost:0,lightweight:1,docker:0,single:0,lowops:1,filebased:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, JS, Go, Java",lc:1,compat:"Cloud (SaaS)",url:"https://pinecone.io",src:""},
-  {name:"LanceDB",tagline:"Serverless vector DB for AI apps",vector:1,graph:0,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,filebased:1,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, JS/TS, Rust",lc:1,compat:"Linux, macOS, Windows",url:"https://lancedb.com",src:"https://github.com/lancedb/lancedb"},
-  {name:"pgvector",tagline:"Vector similarity search for Postgres",vector:1,graph:0,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,filebased:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"All Postgres clients",lc:1,compat:"Linux, macOS, Windows",url:"https://github.com/pgvector/pgvector",src:"https://github.com/pgvector/pgvector"},
-  {name:"pgvectorscale",tagline:"High-perf vector search on Postgres",vector:1,graph:0,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,filebased:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"All Postgres clients",lc:1,compat:"Linux, macOS",url:"https://github.com/timescale/pgvectorscale",src:"https://github.com/timescale/pgvectorscale"},
-  {name:"FAISS",tagline:"Efficient similarity search library (Meta)",vector:1,graph:0,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,filebased:1,traversal:0,hybrid:0,rag:0,cypher:0,langs:"Python, C++",lc:1,compat:"Linux, macOS, Windows",url:"https://faiss.ai",src:"https://github.com/facebookresearch/faiss"},
-  {name:"Elasticsearch",tagline:"Distributed search & analytics engine",vector:1,graph:0,oss:0,selfhost:1,lightweight:0,docker:1,single:1,lowops:0,filebased:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, Java, JS, Go, Ruby",lc:1,compat:"Linux, macOS, Windows",url:"https://elastic.co",src:"https://github.com/elastic/elasticsearch"},
-  {name:"MongoDB Atlas Vector",tagline:"Document DB with vector search",vector:1,graph:0,oss:0,selfhost:0,lightweight:0,docker:0,single:0,lowops:1,filebased:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, JS, Java, Go, C#",lc:1,compat:"Cloud (SaaS)",url:"https://www.mongodb.com/products/platform/atlas-vector-search",src:""},
-  {name:"Redis Vector",tagline:"In-memory DB with vector search",vector:1,graph:0,oss:0,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,filebased:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, JS, Java, Go, C#",lc:1,compat:"Linux, macOS, Windows",url:"https://redis.io/docs/latest/develop/get-started/vector-database/",src:"https://github.com/redis/redis"},
-  {name:"Neo4j",tagline:"Native graph database platform",vector:1,graph:1,oss:0,selfhost:1,lightweight:0,docker:1,single:1,lowops:0,filebased:0,traversal:1,hybrid:1,rag:1,cypher:1,langs:"Python, Java, JS, Go, .NET",lc:1,compat:"Linux, macOS, Windows",url:"https://neo4j.com",src:"https://github.com/neo4j/neo4j"},
-  {name:"Memgraph",tagline:"Real-time in-memory graph platform",vector:1,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,filebased:0,traversal:1,hybrid:0,rag:1,cypher:1,langs:"Python, JS, C++, Rust, Go",lc:1,compat:"Linux, macOS (Docker), Windows (Docker)",url:"https://memgraph.com",src:"https://github.com/memgraph/memgraph"},
-  {name:"TigerGraph",tagline:"Scalable graph analytics platform",vector:1,graph:1,oss:0,selfhost:1,lightweight:0,docker:1,single:0,lowops:0,filebased:0,traversal:1,hybrid:1,rag:1,cypher:0,langs:"Python, Java, REST",lc:0,compat:"Linux, Cloud",url:"https://tigergraph.com",src:""},
-  {name:"Amazon Neptune",tagline:"Managed graph database service",vector:1,graph:1,oss:0,selfhost:0,lightweight:0,docker:0,single:0,lowops:1,filebased:0,traversal:1,hybrid:0,rag:0,cypher:0,langs:"Python, Java, JS, Go",lc:0,compat:"AWS Cloud only",url:"https://aws.amazon.com/neptune/",src:""},
-  {name:"FalkorDB",tagline:"Graph DB with vector search for AI",vector:1,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,filebased:0,traversal:1,hybrid:1,rag:1,cypher:1,langs:"Python, JS, Java, Go, Rust",lc:1,compat:"Linux, macOS, Windows",url:"https://falkordb.com",src:"https://github.com/FalkorDB/FalkorDB"},
-  {name:"JanusGraph",tagline:"Distributed, open-source graph DB",vector:0,graph:1,oss:1,selfhost:1,lightweight:0,docker:1,single:0,lowops:0,filebased:0,traversal:1,hybrid:0,rag:0,cypher:0,langs:"Java, Python, Gremlin",lc:0,compat:"Linux, macOS, Windows",url:"https://janusgraph.org",src:"https://github.com/JanusGraph/janusgraph"},
-  {name:"OrientDB",tagline:"Multi-model DB (graph + document)",vector:0,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,filebased:1,traversal:1,hybrid:0,rag:0,cypher:0,langs:"Java, Python, JS, SQL-like",lc:0,compat:"Linux, macOS, Windows",url:"https://orientdb.org",src:"https://github.com/orientechnologies/orientdb"},
-  {name:"ArcadeDB",tagline:"Multi-model DB inspired by OrientDB",vector:0,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,filebased:1,traversal:1,hybrid:0,rag:0,cypher:1,langs:"Java, Python, JS, HTTP",lc:0,compat:"Linux, macOS, Windows",url:"https://arcadedb.com",src:"https://github.com/ArcadeData/arcadedb"},
-  {name:"ArangoDB",tagline:"Multi-model: graph, document, key-value",vector:1,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,filebased:0,traversal:1,hybrid:1,rag:1,cypher:0,langs:"Python, JS, Java, Go, PHP",lc:1,compat:"Linux, macOS, Windows",url:"https://arangodb.com",src:"https://github.com/arangodb/arangodb"},
-  {name:"PG + pgvector + AGE",tagline:"Postgres with graph + vector extensions",vector:1,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,filebased:0,traversal:1,hybrid:1,rag:1,cypher:1,langs:"All Postgres clients",lc:1,compat:"Linux, macOS, Windows",url:"https://github.com/apache/age",src:"https://github.com/apache/age"},
-  {name:"CozoDB",tagline:"Embeddable, relational-graph-vector DB",vector:1,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,filebased:1,traversal:1,hybrid:1,rag:1,cypher:0,langs:"Python, JS, Java, Rust",lc:1,compat:"Linux, macOS, Windows",url:"https://cozodb.org",src:"https://github.com/cozodb/cozo"},
-  {name:"Vespa",tagline:"Enterprise search + vector + analytics",vector:1,graph:0,oss:1,selfhost:1,lightweight:0,docker:1,single:1,lowops:0,filebased:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Java, Python, Rust, JS",lc:1,compat:"Linux, macOS (Docker)",url:"https://vespa.ai",src:"https://github.com/vespa-engine/vespa"},
-  {name:"SurrealDB",tagline:"Multi-model: graph, doc, vector, SQL",vector:1,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,filebased:1,traversal:1,hybrid:1,rag:1,cypher:0,langs:"Python, JS, Rust, Go, .NET, Java",lc:1,compat:"Linux, macOS, Windows",url:"https://surrealdb.com",src:"https://github.com/surrealdb/surrealdb"},
+  {name:"Qdrant",tagline:"High-perf vector search engine",vector:1,graph:0,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,embeddable:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, Go, JS, Rust",lc:1,compat:"Linux, macOS, Windows",url:"https://qdrant.tech",src:"https://github.com/qdrant/qdrant"},
+  {name:"Chroma",tagline:"AI-native open-source embedding DB",vector:1,graph:0,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,embeddable:1,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, JS/TS",lc:1,compat:"Linux, macOS, Windows",url:"https://trychroma.com",src:"https://github.com/chroma-core/chroma"},
+  {name:"Weaviate",tagline:"AI-native vector database",vector:1,graph:0,oss:1,selfhost:1,lightweight:0,docker:1,single:1,lowops:0,embeddable:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, Go, JS, Java",lc:1,compat:"Linux, macOS, Windows",url:"https://weaviate.io",src:"https://github.com/weaviate/weaviate"},
+  {name:"Milvus",tagline:"Cloud-native vector DB for scale",vector:1,graph:0,oss:1,selfhost:1,lightweight:0,docker:1,single:0,lowops:0,embeddable:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, Java, Go, JS",lc:1,compat:"Linux, macOS, Windows",url:"https://milvus.io",src:"https://github.com/milvus-io/milvus"},
+  {name:"Pinecone",tagline:"Fully managed vector database",vector:1,graph:0,oss:0,selfhost:0,lightweight:1,docker:0,single:0,lowops:1,embeddable:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, JS, Go, Java",lc:1,compat:"Cloud (SaaS)",url:"https://pinecone.io",src:""},
+  {name:"LanceDB",tagline:"Serverless vector DB for AI apps",vector:1,graph:0,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,embeddable:1,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, JS/TS, Rust",lc:1,compat:"Linux, macOS, Windows",url:"https://lancedb.com",src:"https://github.com/lancedb/lancedb"},
+  {name:"pgvector",tagline:"Vector similarity search for Postgres",vector:1,graph:0,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,embeddable:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"All Postgres clients",lc:1,compat:"Linux, macOS, Windows",url:"https://github.com/pgvector/pgvector",src:"https://github.com/pgvector/pgvector"},
+  {name:"pgvectorscale",tagline:"High-perf vector search on Postgres",vector:1,graph:0,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,embeddable:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"All Postgres clients",lc:1,compat:"Linux, macOS",url:"https://github.com/timescale/pgvectorscale",src:"https://github.com/timescale/pgvectorscale"},
+  {name:"FAISS",tagline:"Efficient similarity search library (Meta)",vector:1,graph:0,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,embeddable:1,traversal:0,hybrid:0,rag:0,cypher:0,langs:"Python, C++",lc:1,compat:"Linux, macOS, Windows",url:"https://faiss.ai",src:"https://github.com/facebookresearch/faiss"},
+  {name:"Elasticsearch",tagline:"Distributed search & analytics engine",vector:1,graph:0,oss:0,selfhost:1,lightweight:0,docker:1,single:1,lowops:0,embeddable:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, Java, JS, Go, Ruby",lc:1,compat:"Linux, macOS, Windows",url:"https://elastic.co",src:"https://github.com/elastic/elasticsearch"},
+  {name:"MongoDB Atlas Vector",tagline:"Document DB with vector search",vector:1,graph:0,oss:0,selfhost:0,lightweight:0,docker:0,single:0,lowops:1,embeddable:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, JS, Java, Go, C#",lc:1,compat:"Cloud (SaaS)",url:"https://www.mongodb.com/products/platform/atlas-vector-search",src:""},
+  {name:"Redis Vector",tagline:"In-memory DB with vector search",vector:1,graph:0,oss:0,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,embeddable:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Python, JS, Java, Go, C#",lc:1,compat:"Linux, macOS, Windows",url:"https://redis.io/docs/latest/develop/get-started/vector-database/",src:"https://github.com/redis/redis"},
+  {name:"Neo4j",tagline:"Native graph database platform",vector:1,graph:1,oss:0,selfhost:1,lightweight:0,docker:1,single:1,lowops:0,embeddable:0,traversal:1,hybrid:1,rag:1,cypher:1,langs:"Python, Java, JS, Go, .NET",lc:1,compat:"Linux, macOS, Windows",url:"https://neo4j.com",src:"https://github.com/neo4j/neo4j"},
+  {name:"Memgraph",tagline:"Real-time in-memory graph platform",vector:1,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,embeddable:0,traversal:1,hybrid:0,rag:1,cypher:1,langs:"Python, JS, C++, Rust, Go",lc:1,compat:"Linux, macOS (Docker), Windows (Docker)",url:"https://memgraph.com",src:"https://github.com/memgraph/memgraph"},
+  {name:"TigerGraph",tagline:"Scalable graph analytics platform",vector:1,graph:1,oss:0,selfhost:1,lightweight:0,docker:1,single:0,lowops:0,embeddable:0,traversal:1,hybrid:1,rag:1,cypher:0,langs:"Python, Java, REST",lc:0,compat:"Linux, Cloud",url:"https://tigergraph.com",src:""},
+  {name:"Amazon Neptune",tagline:"Managed graph database service",vector:1,graph:1,oss:0,selfhost:0,lightweight:0,docker:0,single:0,lowops:1,embeddable:0,traversal:1,hybrid:0,rag:0,cypher:0,langs:"Python, Java, JS, Go",lc:0,compat:"AWS Cloud only",url:"https://aws.amazon.com/neptune/",src:""},
+  {name:"FalkorDB",tagline:"Graph DB with vector search for AI",vector:1,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,embeddable:0,traversal:1,hybrid:1,rag:1,cypher:1,langs:"Python, JS, Java, Go, Rust",lc:1,compat:"Linux, macOS, Windows",url:"https://falkordb.com",src:"https://github.com/FalkorDB/FalkorDB"},
+  {name:"JanusGraph",tagline:"Distributed, open-source graph DB",vector:0,graph:1,oss:1,selfhost:1,lightweight:0,docker:1,single:0,lowops:0,embeddable:0,traversal:1,hybrid:0,rag:0,cypher:0,langs:"Java, Python, Gremlin",lc:0,compat:"Linux, macOS, Windows",url:"https://janusgraph.org",src:"https://github.com/JanusGraph/janusgraph"},
+  {name:"OrientDB",tagline:"Multi-model DB (graph + document)",vector:0,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,embeddable:1,traversal:1,hybrid:0,rag:0,cypher:0,langs:"Java, Python, JS, SQL-like",lc:0,compat:"Linux, macOS, Windows",url:"https://orientdb.org",src:"https://github.com/orientechnologies/orientdb"},
+  {name:"ArcadeDB",tagline:"Multi-model DB inspired by OrientDB",vector:0,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,embeddable:1,traversal:1,hybrid:0,rag:0,cypher:1,langs:"Java, Python, JS, HTTP",lc:0,compat:"Linux, macOS, Windows",url:"https://arcadedb.com",src:"https://github.com/ArcadeData/arcadedb"},
+  {name:"ArangoDB",tagline:"Multi-model: graph, document, key-value",vector:1,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,embeddable:0,traversal:1,hybrid:1,rag:1,cypher:0,langs:"Python, JS, Java, Go, PHP",lc:1,compat:"Linux, macOS, Windows",url:"https://arangodb.com",src:"https://github.com/arangodb/arangodb"},
+  {name:"PG + pgvector + AGE",tagline:"Postgres with graph + vector extensions",vector:1,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,embeddable:0,traversal:1,hybrid:1,rag:1,cypher:1,langs:"All Postgres clients",lc:1,compat:"Linux, macOS, Windows",url:"https://github.com/apache/age",src:"https://github.com/apache/age"},
+  {name:"CozoDB",tagline:"Embeddable, relational-graph-vector DB",vector:1,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,embeddable:1,traversal:1,hybrid:1,rag:1,cypher:0,langs:"Python, JS, Java, Rust",lc:1,compat:"Linux, macOS, Windows",url:"https://cozodb.org",src:"https://github.com/cozodb/cozo"},
+  {name:"Vespa",tagline:"Enterprise search + vector + analytics",vector:1,graph:0,oss:1,selfhost:1,lightweight:0,docker:1,single:1,lowops:0,embeddable:0,traversal:0,hybrid:1,rag:1,cypher:0,langs:"Java, Python, Rust, JS",lc:1,compat:"Linux, macOS (Docker)",url:"https://vespa.ai",src:"https://github.com/vespa-engine/vespa"},
+  {name:"SurrealDB",tagline:"Multi-model: graph, doc, vector, SQL",vector:1,graph:1,oss:1,selfhost:1,lightweight:1,docker:1,single:1,lowops:1,embeddable:1,traversal:1,hybrid:1,rag:1,cypher:0,langs:"Python, JS, Rust, Go, .NET, Java",lc:1,compat:"Linux, macOS, Windows",url:"https://surrealdb.com",src:"https://github.com/surrealdb/surrealdb"},
 ];
 
 const boolCols = [
@@ -394,7 +395,7 @@ const boolCols = [
   {key:"docker",label:"Docker"},
   {key:"single",label:"Single-node"},
   {key:"lowops",label:"Low ops"},
-  {key:"filebased",label:"File-based"},
+  {key:"embeddable",label:"Embeddable"},
   {key:"traversal",label:"Graph traversal"},
   {key:"hybrid",label:"Hybrid search"},
   {key:"rag",label:"RAG support"},
@@ -410,10 +411,19 @@ function renderPills() {
   container.innerHTML = '';
   boolCols.forEach(c => {
     const p = document.createElement('span');
-    p.className = 'pill' + (filterState[c.key] === true ? ' on' : '');
+    p.className = 'pill';
+    if (filterState[c.key] === true) p.classList.add('on');
+    if (filterState[c.key] === false) p.classList.add('off');
     p.textContent = c.label;
     p.onclick = () => {
-      filterState[c.key] = filterState[c.key] === true ? null : true;
+      const state = filterState[c.key];
+      if (state === null) {
+        filterState[c.key] = true;
+      } else if (state === true) {
+        filterState[c.key] = false;
+      } else {
+        filterState[c.key] = null;
+      }
       renderPills(); render();
     };
     container.appendChild(p);
@@ -429,6 +439,7 @@ function render() {
   let rows = [...dbs];
   Object.keys(filterState).forEach(k => {
     if (filterState[k] === true) rows = rows.filter(r => r[k] === 1);
+    else if (filterState[k] === false) rows = rows.filter(r => r[k] === 0);
   });
   if (q) rows = rows.filter(r => (r.name + r.tagline + r.langs + r.compat).toLowerCase().includes(q));
   rows.sort((a, b) => {
@@ -451,7 +462,7 @@ function render() {
     <td class="col-bool" style="text-align:center">${bc(r.docker)}</td>
     <td class="col-bool" style="text-align:center">${bc(r.single)}</td>
     <td class="col-bool" style="text-align:center">${bc(r.lowops)}</td>
-    <td class="col-bool" style="text-align:center">${bc(r.filebased)}</td>
+    <td class="col-bool" style="text-align:center">${bc(r.embeddable)}</td>
     <td class="col-bool" style="text-align:center">${bc(r.traversal)}</td>
     <td class="col-bool" style="text-align:center">${bc(r.hybrid)}</td>
     <td class="col-bool" style="text-align:center">${bc(r.rag)}</td>

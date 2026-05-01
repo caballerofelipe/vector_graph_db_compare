@@ -5,7 +5,7 @@
 A self-contained, interactive HTML file (`db_comparison_table.html`) comparing 25 databases (vector, graph, and multi-model) across 20 columns. It has:
 
 - **Sortable columns** — click any header to sort ascending/descending
-- **Feature filter pills** — click to require a feature; only matching DBs show
+- **Three-state feature filter pills** — click to cycle: none (no filter) → on (green, require feature) → off (pink, exclude feature)
 - **Text search** — filters by name, tagline, language, or OS
 - **Hover tooltips** on every column header explaining what the column means (implemented via a JS-driven fixed-position `div`, not CSS `::after`, because sticky headers clip pseudo-element tooltips)
 
@@ -40,7 +40,7 @@ Turbopuffer and ClickHouse were considered but not added (too niche / primarily 
 | Dock | `docker` | Official Docker image available |
 | 1-Node | `single` | Runs on a single machine, no cluster needed |
 | Low-Ops | `lowops` | Minimal ongoing maintenance overhead |
-| File | `filebased` | **Embedded/file-based in the SQLite sense** — runs in-process, stores to local files, no server process needed |
+| Embed | `embeddable` | **Embedded in the SQLite sense** — runs in-process, stores to local files, no server process needed |
 | Trav | `traversal` | Graph traversal — multi-hop queries, path-finding |
 | Hybrid | `hybrid` | Hybrid search — vector + keyword/BM25 in one query |
 | RAG | `rag` | Integrates well as retrieval layer in RAG pipelines |
@@ -50,26 +50,6 @@ Turbopuffer and ClickHouse were considered but not added (too niche / primarily 
 | OS Compat | `compat` | Operating systems supported natively |
 | URL | `url` | Official website |
 | Source | `src` | GitHub / source code repository |
-
----
-
-## Important clarification: "File-based" column
-
-The user clarified mid-session that **file-based means SQLite-style embedded storage** — the DB runs in-process with no separate server, storing data directly in local files. It does NOT mean "has disk persistence" (which almost all DBs have).
-
-### Databases marked file-based ✓
-- **Chroma** — embedded mode with local file storage
-- **LanceDB** — core design is file-based (Lance columnar format)
-- **FAISS** — saves/loads index files manually (library, not a server)
-- **OrientDB** — stores data in local files
-- **ArcadeDB** — file-based local storage
-- **CozoDB** — embeddable with RocksDB or SQLite backend
-- **SurrealDB** — embedded mode with file storage
-
-### Notable NOT file-based
-- **Memgraph** — in-memory by design; has WAL + snapshots for durability but requires a running server process. Cannot be used SQLite-style.
-- **pgvector / pgvectorscale** — requires a running Postgres server
-- **Qdrant, Weaviate, Milvus, Neo4j, etc.** — all require server processes
 
 ---
 
@@ -98,13 +78,6 @@ The user clarified mid-session that **file-based means SQLite-style embedded sto
 - **Column visibility toggle** — allow turning individual columns on/off so the user can hide columns they don't care about
 - **Tooltip on filter pills** — the filter buttons should show the same definition tooltip as the corresponding column header
 
-### Filter pill behaviour
-- **Three-state filter pills** instead of current two-state (on / none):
-  - **None** (default) — no filter applied, all DBs shown regardless of this property
-  - **On** (green, current behaviour) — only show DBs that HAVE this property
-  - **Off** (blacked out / dimmed) — only show DBs that do NOT have this property
-- Multiple pills can be active simultaneously; all active filters are ANDed together
-
 ### Cell-level notes
 - Some cells need nuance beyond a simple yes/no dot. If a cell has a note, display a small **ⓘ** (i in a circle) next to the dot. Hovering it shows the note as a tooltip (same JS-driven tooltip mechanism already in place).
 - Examples of cells that need notes:
@@ -132,7 +105,7 @@ The user clarified mid-session that **file-based means SQLite-style embedded sto
 - Both files live in the same directory; HTML loads the CSV via `fetch()` on page load with a relative path
 - No DB data should be hardcoded in the JS — everything comes from the CSV
 - **CSV format:**
-  - Header row uses the JS data keys: `name, tagline, vector, graph, oss, selfhost, lightweight, docker, single, lowops, embeddable, traversal, hybrid, rag, cypher, langs, lc, compat, url, src, ram, persistence, server, notes`
+  - Header row uses the JS data keys: `name, tagline, vector, graph, oss, selfhost, lightweight, docker, single, lowops, embeddable, traversal, hybrid, rag, cypher, langs, lc, compat, url, src, ram, persistence, server, notes` (note: `embeddable` column replaces the old `filebased`)
   - Boolean columns: `1` = yes, `0` = no
   - String columns (`langs`, `compat`, `url`, `src`, `tagline`): plain text, double-quoted if they contain commas
   - **`notes` column**: JSON-encoded object keyed by column name, double-quoted and CSV-escaped. Example: `"{""embeddable"":""Embedded mode available; server mode also supported"",""ram"":""RAM-first by design""}"`
@@ -159,9 +132,6 @@ The user clarified mid-session that **file-based means SQLite-style embedded sto
 | SurrealDB | embeddable | Embedded mode available via the embedded feature flag in Rust/Python |
 | Pinecone | selfhost | SaaS only — no self-host option |
 | MongoDB Atlas Vector | selfhost | Atlas is cloud-only; self-hosted MongoDB requires separate vector configuration |
-
-### Rename
-- **"File-based" → "Embeddable"** — update column header, tooltip text, filter pill label, CSV header, and all JS key references (`filebased` → `embeddable`)
 
 ### New columns to add
 
