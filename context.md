@@ -122,17 +122,54 @@ The user clarified mid-session that **file-based means SQLite-style embedded sto
 
 ### Light theme
 - Add a **light/dark theme toggle** button in the header area
-- Default can be dark (current) or follow system preference via `prefers-color-scheme`
-- Light theme should feel clean and professional — white/off-white backgrounds, dark text, same green accent or a slightly deeper green for better contrast on light backgrounds
-- All CSS should use variables so the swap is clean; avoid hardcoded hex colors in component styles
-| Column | Key | Description |
+- Default can be dark (current) or follow system `prefers-color-scheme`
+- Light theme: white/off-white backgrounds, dark text, same green accent (slightly deeper for contrast on light)
+- All colors must use CSS variables — no hardcoded hex in component styles — so the theme swap is a single class toggle on `<body>` or `:root`
+- Theme preference persisted in `localStorage`
+
+### CSV-driven data
+- Extract all DB records out of the HTML into a separate **`db_comparison.csv`** file
+- Both files live in the same directory; HTML loads the CSV via `fetch()` on page load with a relative path
+- No DB data should be hardcoded in the JS — everything comes from the CSV
+- **CSV format:**
+  - Header row uses the JS data keys: `name, tagline, vector, graph, oss, selfhost, lightweight, docker, single, lowops, embeddable, traversal, hybrid, rag, cypher, langs, lc, compat, url, src, ram, persistence, server, notes`
+  - Boolean columns: `1` = yes, `0` = no
+  - String columns (`langs`, `compat`, `url`, `src`, `tagline`): plain text, double-quoted if they contain commas
+  - **`notes` column**: JSON-encoded object keyed by column name, double-quoted and CSV-escaped. Example: `"{""embeddable"":""Embedded mode available; server mode also supported"",""ram"":""RAM-first by design""}"`
+  - Empty notes: leave the cell empty or `{}`
+  - Add a link to allow the user to download the CSV directly for their usage.
+
+### Cell-level notes (ⓘ icon)
+- If a DB's `notes` object has an entry for a given column, render a small **ⓘ** icon inside that cell next to the dot
+- Hovering ⓘ shows the note text using the same JS-driven fixed-position tooltip already in place
+- The ⓘ should be subtle — small, muted color, always visible (not just on hover)
+- Cells with no note show only the dot, no icon
+- Known notes to include (minimum):
+
+| DB | Column | Note |
 |---|---|---|
-| RAM | `ram` | Runs primarily in RAM — data is held in memory for fast access (e.g. Redis, Memgraph) |
-| Persistence | `persistence` | Saves state to disk so data survives restarts — no data loss if server/computer is rebooted |
-| Server | `server` | Can be run as a standalone server process, accessible over a network |
+| FAISS | persistence | No built-in persistence; caller must manually save/load index files |
+| FAISS | server | Library only — no server mode; must be wrapped by the application |
+| Chroma | embeddable | Embedded mode available; persistent-client and server modes also supported |
+| Chroma | persistence | Default in-memory mode has no persistence; use PersistentClient for durability |
+| CozoDB | embeddable | Backend is configurable: in-memory, SQLite, or RocksDB |
+| CozoDB | persistence | Depends on backend; SQLite and RocksDB backends are durable |
+| FalkorDB | ram | Built on Redis; data is RAM-first with optional AOF/RDB persistence |
+| Memgraph | embeddable | In-memory server; not embeddable in the SQLite sense — requires a server process |
+| SurrealDB | embeddable | Embedded mode available via the embedded feature flag in Rust/Python |
+| Pinecone | selfhost | SaaS only — no self-host option |
+| MongoDB Atlas Vector | selfhost | Atlas is cloud-only; self-hosted MongoDB requires separate vector configuration |
 
 ### Rename
-- **"File-based" → "Embeddable"** — the column already means SQLite-style embedded/in-process use; the label should reflect that. Update column header, tooltip, filter pill label, and any references in the HTML.
+- **"File-based" → "Embeddable"** — update column header, tooltip text, filter pill label, CSV header, and all JS key references (`filebased` → `embeddable`)
+
+### New columns to add
+
+| Column | Key | Description |
+|---|---|---|
+| RAM | `ram` | Runs primarily in RAM — data held in memory for fast access (e.g. Redis, Memgraph, FalkorDB) |
+| Persistence | `persistence` | Saves state to disk so data survives restarts — no data loss on reboot |
+| Server | `server` | Can be run as a standalone server process accessible over a network |
 
 ### Data to fill in for new columns (research needed)
 All values below are a starting point — verify before shipping:
@@ -173,6 +210,7 @@ Notes:
 
 ---
 
-## File delivered
+## Files delivered
 
-`db_comparison_table.html` — single self-contained file, open in any browser
+- `db_comparison_table.html` — single self-contained file, open in any browser
+- `context.md` — this file
