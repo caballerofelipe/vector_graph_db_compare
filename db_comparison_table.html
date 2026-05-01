@@ -57,7 +57,8 @@
     --tooltip-bg: #1f2937;
     --tooltip-text: #f9fafb;
   }
-  body.light .yes-dot { box-shadow: none; }
+  body.light .yes-dot,
+  body.light .note-dot { box-shadow: none !important; }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -233,7 +234,6 @@
     border-collapse: collapse;
     font-size: 12px;
     table-layout: fixed;
-    min-width: 1560px;
   }
 
   th {
@@ -325,7 +325,7 @@
 
   .col-db   { width: 120px; }
   .col-tag  { width: 175px; }
-  .col-bool { width: 46px; text-align: center; }
+  .col-bool { width: 55px; text-align: center; }
   .col-pl   { width: 130px; }
   .col-oc   { width: 130px; }
   .col-url  { width: 55px; text-align: center; }
@@ -356,6 +356,41 @@
     box-shadow: 0 4px 20px rgba(0,0,0,0.6);
   }
   [data-tip] { cursor: default; }
+
+  .col-section {
+    margin-top: 14px;
+    border-top: 0.5px solid var(--border);
+    padding-top: 12px;
+  }
+  .col-section-hdr {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .col-section-hdr:hover .filter-label { color: var(--text); }
+  .col-arrow {
+    font-size: 9px;
+    color: var(--muted);
+    display: inline-block;
+    transition: transform .2s;
+  }
+  .col-arrow.open { transform: rotate(90deg); }
+  .col-section-body { display: none; margin-top: 12px; }
+  .col-section-body.open { display: block; }
+  .col-group { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
+  .col-group:last-child { margin-bottom: 0; }
+  .col-group-label {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: var(--mono);
+    letter-spacing: 0.5px;
+    min-width: 90px;
+    padding-top: 4px;
+    flex-shrink: 0;
+  }
+  .pill.col-hidden { opacity: 0.35; text-decoration: line-through; }
 </style>
 <script>
   // Apply theme before first paint to avoid flash of wrong theme.
@@ -385,6 +420,13 @@
     </div>
     <div class="filter-label">REQUIRE FEATURE</div>
     <div class="pills" id="pills"></div>
+    <div class="col-section">
+      <div class="col-section-hdr" id="colHdr">
+        <div class="filter-label" style="margin:0">COLUMNS <span id="colCount" style="font-weight:400"></span></div>
+        <span class="col-arrow" id="colArrow">▶</span>
+      </div>
+      <div class="col-section-body" id="colBody"></div>
+    </div>
   </div>
 
   <div class="stats" id="stats"></div>
@@ -414,8 +456,8 @@
     <th class="col-pl" data-col="langs" data-tip="Languages — official client libraries or SDKs available for these programming languages.">LANGUAGES <span class="arr">↕</span></th>
     <th class="col-bool" data-col="lc" data-tip="LangChain / LlamaIndex — has a native integration with LangChain or LlamaIndex, the two most popular LLM orchestration frameworks.">LC/LI <span class="arr">↕</span></th>
     <th class="col-oc" data-col="compat" data-tip="OS compatibility — operating systems on which this DB can be natively installed or run (without Docker workarounds).">OS COMPAT <span class="arr">↕</span></th>
-    <th class="col-url" data-tip="Link to the official product or project website.">URL</th>
-    <th class="col-src" data-tip="Link to the public source code repository on GitHub or equivalent.">SOURCE</th>
+    <th class="col-url" data-col="url" data-tip="Link to the official product or project website.">URL</th>
+    <th class="col-src" data-col="src" data-tip="Link to the public source code repository on GitHub or equivalent.">SOURCE</th>
   </tr>
   </thead>
   <tbody id="tbody"></tbody>
@@ -492,6 +534,37 @@ const boolCols = [
 const filterState = {};
 boolCols.forEach(c => filterState[c.key] = null);
 
+const colGroups = [
+  { label: 'INFO',         cols: ['tagline'] },
+  { label: 'TYPE',         cols: ['vector','graph'] },
+  { label: 'DEPLOYMENT',   cols: ['oss','selfhost','lightweight','docker','single','lowops'] },
+  { label: 'STORAGE',      cols: ['ram','persistence','server','embeddable'] },
+  { label: 'CAPABILITIES', cols: ['traversal','hybrid','rag','cypher'] },
+  { label: 'INTEGRATIONS', cols: ['langs','lc','compat'] },
+  { label: 'LINKS',        cols: ['url','src'] },
+];
+const colLabels = {
+  tagline:'Tagline',
+  vector:'Vector DB', graph:'Graph DB',
+  oss:'OSS', selfhost:'Self-hosted', lightweight:'Lightweight', docker:'Docker', single:'Single-node', lowops:'Low ops',
+  ram:'RAM-first', persistence:'Persistence', server:'Server', embeddable:'Embeddable',
+  traversal:'Traversal', hybrid:'Hybrid search', rag:'RAG', cypher:'Cypher',
+  langs:'Languages', lc:'LC/LlamaIndex', compat:'OS Compat',
+  url:'URL', src:'Source',
+};
+const colDefaultVisible = new Set(['tagline','vector','graph','oss','selfhost','persistence','server','compat','url','src']);
+const colVisibility = {};
+colGroups.forEach(g => g.cols.forEach(k => colVisibility[k] = colDefaultVisible.has(k)));
+
+const NAME_WIDTH = 120;
+const colWidths = {
+  tagline:175,
+  vector:55, graph:55, oss:55, selfhost:55, lightweight:55, docker:55,
+  single:55, lowops:55, ram:55, persistence:55, server:55, embeddable:55,
+  traversal:55, hybrid:55, rag:55, cypher:55, lc:55,
+  langs:130, compat:130, url:55, src:55,
+};
+
 // Build a key → tip-text map from th[data-col] elements (single source of truth).
 const colTips = {};
 document.querySelectorAll('th[data-col]').forEach(th => {
@@ -502,6 +575,7 @@ function renderPills() {
   const container = document.getElementById('pills');
   container.innerHTML = '';
   boolCols.forEach(c => {
+    if (!colVisibility[c.key]) return;
     const p = document.createElement('span');
     p.className = 'pill';
     if (filterState[c.key] === true) p.classList.add('on');
@@ -522,6 +596,51 @@ function renderPills() {
     container.appendChild(p);
   });
 }
+
+function applyColVisibility() {
+  let css = '';
+  let minW = NAME_WIDTH;
+  Object.keys(colVisibility).forEach(k => {
+    if (!colVisibility[k]) css += `[data-col="${k}"]{display:none}\n`;
+    else minW += colWidths[k] || 0;
+  });
+  let s = document.getElementById('colStyle');
+  if (!s) { s = document.createElement('style'); s.id = 'colStyle'; document.head.appendChild(s); }
+  s.textContent = css;
+  document.getElementById('tbl').style.minWidth = minW + 'px';
+}
+
+function renderColPills() {
+  const total = Object.keys(colVisibility).length;
+  const shown = Object.values(colVisibility).filter(v => v).length;
+  document.getElementById('colCount').textContent = shown < total ? `(${shown}/${total} shown)` : '';
+  const body = document.getElementById('colBody');
+  body.innerHTML = colGroups.map(g => `
+    <div class="col-group">
+      <span class="col-group-label">${g.label}</span>
+      <div class="pills">${g.cols.map(k => {
+        const tip = colTips[k] ? ` data-tip="${colTips[k].replace(/"/g,'&quot;')}"` : '';
+        return `<span class="pill${colVisibility[k] ? '' : ' col-hidden'}" data-colk="${k}"${tip}>${colLabels[k]}</span>`;
+      }).join('')}</div>
+    </div>`).join('');
+  applyColVisibility();
+}
+
+document.getElementById('colBody').addEventListener('click', e => {
+  const p = e.target.closest('[data-colk]');
+  if (!p) return;
+  const k = p.dataset.colk;
+  colVisibility[k] = !colVisibility[k];
+  if (!colVisibility[k] && filterState[k] !== undefined) filterState[k] = null;
+  renderColPills();
+  renderPills();
+  render();
+});
+
+document.getElementById('colHdr').addEventListener('click', () => {
+  document.getElementById('colArrow').classList.toggle('open');
+  document.getElementById('colBody').classList.toggle('open');
+});
 
 let sortCol = 'name', sortDir = 1;
 
@@ -551,28 +670,28 @@ function render() {
   const tbody = document.getElementById('tbody');
   tbody.innerHTML = rows.map(r => `<tr>
     <td class="col-db db-name">${r.name}</td>
-    <td class="col-tag tagline" title="${r.tagline}">${r.tagline}</td>
-    <td class="col-bool" style="text-align:center">${bc(r.vector,r.notes?.vector)}</td>
-    <td class="col-bool" style="text-align:center">${bc(r.graph,r.notes?.graph)}</td>
-    <td class="col-bool" style="text-align:center">${bc(r.oss,r.notes?.oss)}</td>
-    <td class="col-bool" style="text-align:center">${bc(r.selfhost,r.notes?.selfhost)}</td>
-    <td class="col-bool" style="text-align:center">${bc(r.lightweight,r.notes?.lightweight)}</td>
-    <td class="col-bool" style="text-align:center">${bc(r.docker,r.notes?.docker)}</td>
-    <td class="col-bool" style="text-align:center">${bc(r.single,r.notes?.single)}</td>
-    <td class="col-bool" style="text-align:center">${bc(r.lowops,r.notes?.lowops)}</td>
-    <td class="col-bool" style="text-align:center">${bc(r.ram,r.notes?.ram)}</td>
-    <td class="col-bool" style="text-align:center">${bc(r.persistence,r.notes?.persistence)}</td>
-    <td class="col-bool" style="text-align:center">${bc(r.server,r.notes?.server)}</td>
-    <td class="col-bool" style="text-align:center">${bc(r.embeddable,r.notes?.embeddable)}</td>
-    <td class="col-bool" style="text-align:center">${bc(r.traversal,r.notes?.traversal)}</td>
-    <td class="col-bool" style="text-align:center">${bc(r.hybrid,r.notes?.hybrid)}</td>
-    <td class="col-bool" style="text-align:center">${bc(r.rag,r.notes?.rag)}</td>
-    <td class="col-bool" style="text-align:center">${bc(r.cypher,r.notes?.cypher)}</td>
-    <td class="col-pl langs-cell" title="${r.langs}">${r.langs}</td>
-    <td class="col-bool" style="text-align:center">${bc(r.lc)}</td>
-    <td class="col-oc compat-cell" title="${r.compat}">${r.compat}</td>
-    <td class="col-url" style="text-align:center">${r.url ? `<a href="${r.url}" target="_blank">↗ site</a>` : ''}</td>
-    <td class="col-src" style="text-align:center">${r.src ? `<a href="${r.src}" target="_blank" class="src-link">↗ gh</a>` : '<span style="color:var(--no-text)">–</span>'}</td>
+    <td class="col-tag tagline" data-col="tagline" title="${r.tagline}">${r.tagline}</td>
+    <td class="col-bool" data-col="vector" style="text-align:center">${bc(r.vector,r.notes?.vector)}</td>
+    <td class="col-bool" data-col="graph" style="text-align:center">${bc(r.graph,r.notes?.graph)}</td>
+    <td class="col-bool" data-col="oss" style="text-align:center">${bc(r.oss,r.notes?.oss)}</td>
+    <td class="col-bool" data-col="selfhost" style="text-align:center">${bc(r.selfhost,r.notes?.selfhost)}</td>
+    <td class="col-bool" data-col="lightweight" style="text-align:center">${bc(r.lightweight,r.notes?.lightweight)}</td>
+    <td class="col-bool" data-col="docker" style="text-align:center">${bc(r.docker,r.notes?.docker)}</td>
+    <td class="col-bool" data-col="single" style="text-align:center">${bc(r.single,r.notes?.single)}</td>
+    <td class="col-bool" data-col="lowops" style="text-align:center">${bc(r.lowops,r.notes?.lowops)}</td>
+    <td class="col-bool" data-col="ram" style="text-align:center">${bc(r.ram,r.notes?.ram)}</td>
+    <td class="col-bool" data-col="persistence" style="text-align:center">${bc(r.persistence,r.notes?.persistence)}</td>
+    <td class="col-bool" data-col="server" style="text-align:center">${bc(r.server,r.notes?.server)}</td>
+    <td class="col-bool" data-col="embeddable" style="text-align:center">${bc(r.embeddable,r.notes?.embeddable)}</td>
+    <td class="col-bool" data-col="traversal" style="text-align:center">${bc(r.traversal,r.notes?.traversal)}</td>
+    <td class="col-bool" data-col="hybrid" style="text-align:center">${bc(r.hybrid,r.notes?.hybrid)}</td>
+    <td class="col-bool" data-col="rag" style="text-align:center">${bc(r.rag,r.notes?.rag)}</td>
+    <td class="col-bool" data-col="cypher" style="text-align:center">${bc(r.cypher,r.notes?.cypher)}</td>
+    <td class="col-pl langs-cell" data-col="langs" title="${r.langs}">${r.langs}</td>
+    <td class="col-bool" data-col="lc" style="text-align:center">${bc(r.lc)}</td>
+    <td class="col-oc compat-cell" data-col="compat" title="${r.compat}">${r.compat}</td>
+    <td class="col-url" data-col="url" style="text-align:center">${r.url ? `<a href="${r.url}" target="_blank">↗ site</a>` : ''}</td>
+    <td class="col-src" data-col="src" style="text-align:center">${r.src ? `<a href="${r.src}" target="_blank" class="src-link">↗ gh</a>` : '<span style="color:var(--no-text)">–</span>'}</td>
   </tr>`).join('');
 }
 
@@ -595,11 +714,13 @@ document.querySelectorAll('th[data-col]').forEach(th => {
 document.getElementById('q').oninput = render;
 document.getElementById('resetBtn').onclick = () => {
   Object.keys(filterState).forEach(k => filterState[k] = null);
+  Object.keys(colVisibility).forEach(k => colVisibility[k] = colDefaultVisible.has(k));
   document.getElementById('q').value = '';
-  renderPills(); render();
+  renderPills(); renderColPills(); render();
 };
 
 renderPills();
+renderColPills();
 render();
 
 const tip = document.getElementById('tooltip');
