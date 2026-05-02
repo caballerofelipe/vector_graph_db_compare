@@ -495,8 +495,7 @@ let dbs = [];
 function parseCSVLine(line) {
   const fields = [];
   let i = 0, n = line.length;
-  while (i <= n) {
-    if (i === n) { fields.push(''); break; }
+  while (i < n) {
     if (line[i] === '"') {
       i++;
       let val = '';
@@ -512,11 +511,12 @@ function parseCSVLine(line) {
       if (i < n && line[i] === ',') i++;
     } else {
       const end = line.indexOf(',', i);
-      if (end === -1) { fields.push(line.slice(i)); break; }
+      if (end === -1) { fields.push(line.slice(i)); i = n; break; }
       fields.push(line.slice(i, end));
       i = end + 1;
     }
   }
+  if (n > 0 && line[n - 1] === ',') fields.push('');
   return fields;
 }
 

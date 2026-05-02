@@ -2,7 +2,7 @@
 
 ## What was built
 
-A self-contained, interactive HTML file (`db_comparison_table.html`) comparing 25 databases (vector, graph, and multi-model) across 23 columns. It has:
+A self-contained, interactive HTML file (`db_comparison_table.html`) comparing 25 databases (vector, graph, and multi-model). The table shows 23 visible columns (name through source); row data also includes a `notes` field for caveat tooltips. It has:
 
 - **Sortable columns** — click any header to sort ascending/descending
 - **Three-state feature filter pills** — click to cycle: none (no filter) → on (green, require feature) → off (pink, exclude feature). Pills for hidden columns are automatically suppressed, and their active filters cleared.
@@ -58,6 +58,7 @@ Turbopuffer and ClickHouse were considered but not added (too niche / primarily 
 | OS Compat | `compat` | Operating systems supported natively |
 | URL | `url` | Official website |
 | Source | `src` | GitHub / source code repository |
+| Notes | `notes` | JSON map of caveat text keyed by boolean column id; not rendered as its own table column |
 
 ---
 
@@ -74,6 +75,7 @@ A green "on" dot turns orange when the feature has a caveat worth knowing. Hover
 | Redis Vector | RAM | All data lives in RAM; disk persistence must be explicitly configured via AOF or RDB — not enabled by default |
 | Redis Vector | Persistence | Persistence via AOF or RDB snapshots; must be explicitly enabled in redis.conf — off by default |
 | Memgraph | Persistence | Persists via periodic snapshots and WAL; primarily in-memory — recent in-flight writes may be lost on unexpected crash |
+| Memgraph | Embeddable | In-memory server; not embeddable in the SQLite sense — requires a server process |
 | FalkorDB | RAM | Built on Redis; data is RAM-first with optional AOF/RDB persistence |
 | FalkorDB | Persistence | Relies on Redis AOF/RDB persistence; must be explicitly enabled in Redis config — not on by default |
 | JanusGraph | Docker | Official image requires an external storage backend (Cassandra, HBase, or BerkeleyDB) — additional services needed alongside it |
@@ -82,6 +84,14 @@ A green "on" dot turns orange when the feature has a caveat worth knowing. Hover
 | CozoDB | Embeddable | Backend is configurable: in-memory, SQLite, or RocksDB |
 | CozoDB | Persistence | Depends on backend; SQLite and RocksDB backends are durable |
 | SurrealDB | Embeddable | Embedded mode available via the embedded feature flag in Rust/Python |
+| Neo4j | OSS | Community Edition is GPLv3 (OSI-approved); Enterprise Edition is commercial — open-core model |
+| Milvus | Single-node | Milvus Lite and standalone mode run on one machine; large production deployments often use distributed Milvus |
+| Memgraph | Hybrid | Vector similarity plus text predicates; combined ranking differs from dedicated BM25+vector hybrid engines |
+| Elasticsearch | Self-hosted | Server is under Elastic License v2 / SSPL (not OSI-approved); client libraries and some components differ |
+| Redis Vector | Self-hosted | Redis Server 7.4+ from Redis Ltd is RSALv2 / SSPL — not OSI-approved; earlier BSD-era releases differ |
+| Amazon Neptune | RAG | Fine as a managed graph/vector back end; LLM RAG wiring is typically custom versus turnkey vector SaaS |
+| ArcadeDB | Vector | Native JVector-based vector indexes (e.g. HNSW); general-purpose multi-model DB rather than a vector-only product |
+| ArcadeDB | Hybrid | Full-text (Lucene) plus vector indexes; dense+sparse tuning differs from search-first engines like Elasticsearch |
 
 ---
 
