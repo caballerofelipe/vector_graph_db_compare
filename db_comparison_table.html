@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vector and Graph DB Comparison Table</title>
+<title>Vector and/or Graph DB Comparison Table</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -215,6 +215,10 @@
   .pill.off { background: rgba(244,114,182,0.12); color: #f472b6; border-color: rgba(244,114,182,0.4); }
 
   .stats {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 14px;
     font-size: 11px;
     color: var(--muted);
     font-family: var(--mono);
@@ -222,6 +226,26 @@
   }
 
   .stats strong { color: var(--accent); }
+
+  .stats-count { min-width: 0; }
+
+  .stats-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px 14px;
+    margin-left: auto;
+    font-size: 10px;
+  }
+
+  .stats-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
 
   .tbl-wrap {
     overflow-x: auto;
@@ -428,7 +452,7 @@
 
   <div class="header">
     <div class="header-top">
-      <h1>Vector and Graph DB <span>Comparison</span> Table</h1>
+      <h1>Vector and/or Graph DB <span>Comparison</span> Table</h1>
       <div style="display:flex;gap:8px;align-items:center">
         <button class="btn-reset" id="csvBtn">↓ CSV</button>
         <button class="btn-theme" id="themeBtn" aria-label="Toggle light/dark theme"></button>
@@ -458,7 +482,15 @@
     </div>
   </div>
 
-  <div class="stats" id="stats"></div>
+  <div class="stats">
+    <span class="stats-count" id="statsCount"></span>
+    <div class="stats-legend" aria-label="Boolean column symbols">
+      <span class="stats-legend-item"><span class="yes-dot" aria-hidden="true"></span> Yes</span>
+      <span class="stats-legend-item"><span class="yes-dot note-dot" aria-hidden="true"></span> Yes (caveat)</span>
+      <span class="stats-legend-item"><span class="no-dot" aria-hidden="true"></span> No</span>
+      <span class="stats-legend-item"><span class="no-dot inactive-note" aria-hidden="true"></span> No (caveat)</span>
+    </div>
+  </div>
 
   <div class="tbl-wrap">
   <table id="tbl">
@@ -484,8 +516,8 @@
     <th class="col-bool" data-col="hybrid" data-tip="Hybrid search — combines vector similarity search with keyword / BM25 full-text search in one query for better retrieval accuracy.">HYBRID <span class="arr">↕</span></th>
     <th class="col-bool" data-col="rag" data-tip="RAG pipeline support — integrates well as the retrieval layer in Retrieval-Augmented Generation workflows for LLM-based applications.">RAG <span class="arr">↕</span></th>
     <th class="col-bool" data-col="cypher" data-tip="Cypher query language — supports Cypher, the declarative graph query language popularized by Neo4j and adopted across several graph DBs.">CYPHER <span class="arr">↕</span></th>
-    <th class="col-pl" data-col="langs" data-tip="Languages — official client libraries or SDKs available for these programming languages.">LANGUAGES <span class="arr">↕</span></th>
     <th class="col-bool" data-col="lc" data-tip="LangChain / LlamaIndex — has a native integration with LangChain or LlamaIndex, the two most popular LLM orchestration frameworks.">LC/LI <span class="arr">↕</span></th>
+    <th class="col-pl" data-col="langs" data-tip="Languages — official client libraries or SDKs available for these programming languages.">LANGUAGES <span class="arr">↕</span></th>
     <th class="col-oc" data-col="compat" data-tip="OS compatibility — operating systems on which this DB can be natively installed or run (without Docker workarounds).">OS COMPAT <span class="arr">↕</span></th>
     <th class="col-url" data-col="url" data-tip="Link to the official product or project website.">URL</th>
     <th class="col-src" data-col="src" data-tip="Link to the public source code repository on GitHub or equivalent.">SOURCE</th>
@@ -576,7 +608,7 @@ const colGroups = [
   { label: 'DEPLOYMENT',   cols: ['oss','selfhost','lightweight','docker','single','lowops'] },
   { label: 'STORAGE',      cols: ['ram','persistence','server','embeddable'] },
   { label: 'CAPABILITIES', cols: ['traversal','hybrid','rag','cypher'] },
-  { label: 'INTEGRATIONS', cols: ['langs','lc','compat'] },
+  { label: 'INTEGRATIONS', cols: ['lc','langs','compat'] },
   { label: 'LINKS',        cols: ['url','src'] },
 ];
 const colLabels = {
@@ -587,7 +619,7 @@ const colLabels = {
   oss:'OSS', selfhost:'Self-hosted', lightweight:'Lightweight', docker:'Docker', single:'Single-node', lowops:'Low ops',
   ram:'RAM-first', persistence:'Persistence', server:'Server', embeddable:'Embeddable',
   traversal:'Traversal', hybrid:'Hybrid search', rag:'RAG', cypher:'Cypher',
-  langs:'Languages', lc:'LC/LlamaIndex', compat:'OS Compat',
+  lc:'LC/LlamaIndex', langs:'Languages', compat:'OS Compat',
   url:'URL', src:'Source',
 };
 const colDefaultVisible = new Set(['tagline','released','active','vector','graph','oss','selfhost','persistence','server','compat','url','src']);
@@ -601,8 +633,8 @@ const colWidths = {
   active:55,
   vector:55, graph:55, oss:55, selfhost:55, lightweight:55, docker:55,
   single:55, lowops:55, ram:55, persistence:55, server:55, embeddable:55,
-  traversal:55, hybrid:55, rag:55, cypher:55, lc:55,
-  langs:130, compat:130, url:55, src:55,
+  traversal:55, hybrid:55, rag:55, cypher:55,
+  lc:55, langs:130, compat:130, url:55, src:55,
 };
 
 // Build a key → tip-text map from th[data-col] elements (single source of truth).
@@ -730,7 +762,7 @@ function render() {
     return sortDir * String(av || '').localeCompare(String(bv || ''));
   });
   const active = rows.length, total = dbs.length;
-  document.getElementById('stats').innerHTML =
+  document.getElementById('statsCount').innerHTML =
     `Showing <strong>${active}</strong> of ${total} databases`;
   const tbody = document.getElementById('tbody');
   tbody.innerHTML = rows.map(r => `<tr>
@@ -754,8 +786,8 @@ function render() {
     <td class="col-bool" data-col="hybrid" style="text-align:center">${boolCell(r.hybrid,r.notes?.hybrid)}</td>
     <td class="col-bool" data-col="rag" style="text-align:center">${boolCell(r.rag,r.notes?.rag)}</td>
     <td class="col-bool" data-col="cypher" style="text-align:center">${boolCell(r.cypher,r.notes?.cypher)}</td>
-    <td class="col-pl langs-cell" data-col="langs" title="${r.langs}">${r.langs}</td>
     <td class="col-bool" data-col="lc" style="text-align:center">${boolCell(r.lc,r.notes?.lc)}</td>
+    <td class="col-pl langs-cell" data-col="langs" title="${r.langs}">${r.langs}</td>
     <td class="col-oc compat-cell" data-col="compat" title="${r.compat}">${r.compat}</td>
     <td class="col-url" data-col="url" style="text-align:center">${r.url ? `<a href="${r.url}" target="_blank">↗ site</a>` : ''}</td>
     <td class="col-src" data-col="src" style="text-align:center">${r.src ? `<a href="${r.src}" target="_blank" class="src-link">↗ gh</a>` : '<span style="color:var(--no-text)">–</span>'}</td>

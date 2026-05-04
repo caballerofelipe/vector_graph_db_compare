@@ -2,6 +2,8 @@
 
 Dense notes for assistants working in this repo. For how to run the page and what it does for users, see `README.md`.
 
+**Page title** (in `db_comparison_table.html`): “Vector **and/or** Graph DB …” — signals that listed products are not required to be both vector and graph engines.
+
 ## Stack
 
 - `db_comparison_table.html` loads `db_comparison_data.js` (same directory). No build step.
@@ -16,7 +18,8 @@ Dense notes for assistants working in this repo. For how to run the page and wha
 - **Text search** — Case-insensitive substring over **`name` + `tagline` + `released` + `langs` + `compat`** only (not URL/source).
 - **Sort** — `sortCol` + `sortDir` (`1` or `-1`). Clicking the active header flips direction; a new column starts ascending. Numbers sort numerically; everything else uses `localeCompare` on strings.
 - **Tooltips** — One fixed `#tooltip` div; **document-level** `mouseover` / `mousemove` / `mouseout` with `e.target.closest('[data-tip]')`. Copy comes from `dataset.tip` (table headers use `th[data-tip]`; header tips are scraped into `colTips` for filter pills). **Position:** cursor + 14px; if `x + 240 > innerWidth` then `x = clientX - 240`; if `y + 120 > innerHeight` then `y = clientY - 90` — coarse, hence awkward near edges.
-- **Column visibility** — `colGroups` labels: INFO, TYPE, DEPLOYMENT, STORAGE, CAPABILITIES, INTEGRATIONS, LINKS (see script for key lists). `#tbl` **`minWidth`** = `NAME_WIDTH` (120) + sum of `colWidths` for visible columns; hidden columns get `display:none` via injected `#colStyle`. **All** / **None** / per-pill toggles; hiding a column clears its filter. **Reset** clears search, all filters, and restores `colDefaultVisible`.
+- **Column visibility** — `colGroups` labels: INFO, TYPE, DEPLOYMENT, STORAGE, CAPABILITIES, INTEGRATIONS, LINKS (see script for key lists). **`INTEGRATIONS`** uses **`['lc','langs','compat']`** — **LC/LI** appears before **Languages** in both the table header/body and the CSV field order (after **Cypher**). `#tbl` **`minWidth`** = `NAME_WIDTH` (120) + sum of `colWidths` for visible columns; hidden columns get `display:none` via injected `#colStyle`. **All** / **None** / per-pill toggles; hiding a column clears its filter. **Reset** clears search, all filters, and restores `colDefaultVisible`.
+- **Stats row** — `#statsCount` shows filtered row count (“Showing *N* of *M* databases”). Static **`.stats-legend`** on the same row (flex; `margin-left: auto` on the legend) lists the four **`boolCell`** dot styles: green yes, orange yes (caveat), plain gray no, gray no + orange ring (off caveat). Full caveat copy is only on cells with **`data-tip`**, not duplicated in the legend.
 - **CSV export** — `↓ CSV` builds a Blob from **`window.DB_CSV_DATA`**; download name **`db_comparison.csv`**.
 - **Parsing** — `BOOL_KEYS` in script lists fields coerced to `0/1`; `notes` is `JSON.parse` when non-empty. Adding a boolean column requires updating **`BOOL_KEYS`**, **`boolCols`** (filter pills), thead `th`, row template (see **Boolean caveat renderers**), **`colGroups`** / **`colLabels`** / **`colWidths`** (and defaults if needed).
 
@@ -45,7 +48,7 @@ Single export: `window.DB_CSV_DATA` (multi-line CSV string). Edit this file only
 
 **Header (field order):**
 
-`name, tagline, released, active, vector, graph, oss, selfhost, lightweight, docker, single, lowops, ram, persistence, server, embeddable, traversal, hybrid, rag, cypher, langs, lc, compat, url, src, notes`
+`name, tagline, released, active, vector, graph, oss, selfhost, lightweight, docker, single, lowops, ram, persistence, server, embeddable, traversal, hybrid, rag, cypher, lc, langs, compat, url, src, notes`
 
 **Rules:** Booleans: `1` / `0`. Strings: plain text; double-quote fields that contain commas. `notes`: JSON object for caveat tooltips, CSV-escaped (`""` for quotes inside); empty if none.
 
@@ -59,7 +62,7 @@ Single export: `window.DB_CSV_DATA` (multi-line CSV string). Edit this file only
 | `oss`, `selfhost`, `lightweight`, `docker`, `single`, `lowops` | OSS, Self-hosted, … |
 | `ram`, `persistence`, `server`, `embeddable` | RAM, Persistence, Server, Embeddable |
 | `traversal`, `hybrid`, `rag`, `cypher` | Traversal, Hybrid, RAG, Cypher |
-| `langs`, `lc`, `compat` | Languages, LC/LI, OS Compat |
+| `lc`, `langs`, `compat` | LC/LI, Languages, OS Compat |
 | `url`, `src` | URL, Source |
 | `released` | Released (`YYYY-MM`) |
 | `tagline` | Tagline |
