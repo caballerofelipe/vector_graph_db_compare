@@ -6,7 +6,7 @@ Dense notes for assistants working in this repo. For how to run the page and wha
 
 - `db_comparison_table.html` loads `db_comparison_data.js` (same directory). No build step.
 - View state persists under `localStorage` key **`dbcmp`** as JSON: **`q`**, **`filters`** (pill map), **`cols`** (visibility map). Theme is not persisted.
-- Caveat copy lives in the CSV **`notes`** column (JSON keyed by boolean field ids). Orange dots only on “on” cells that have a note; “off” cells never show a note marker.
+- Caveat copy lives in the CSV **`notes`** column (JSON keyed by boolean field ids). Every boolean column uses **`boolCell(v, note)`** (see **Boolean caveat renderers**): **on** + `note` → orange yes-dot; **on** without `note` → green; **off** + `note` → orange-ring gray off-dot; **off** without `note` → plain gray dot.
 - Feature pills for a column are hidden when that column is hidden; their filters are cleared.
 
 ## UI behavior (implementation)
@@ -18,11 +18,26 @@ Dense notes for assistants working in this repo. For how to run the page and wha
 - **Tooltips** — One fixed `#tooltip` div; **document-level** `mouseover` / `mousemove` / `mouseout` with `e.target.closest('[data-tip]')`. Copy comes from `dataset.tip` (table headers use `th[data-tip]`; header tips are scraped into `colTips` for filter pills). **Position:** cursor + 14px; if `x + 240 > innerWidth` then `x = clientX - 240`; if `y + 120 > innerHeight` then `y = clientY - 90` — coarse, hence awkward near edges.
 - **Column visibility** — `colGroups` labels: INFO, TYPE, DEPLOYMENT, STORAGE, CAPABILITIES, INTEGRATIONS, LINKS (see script for key lists). `#tbl` **`minWidth`** = `NAME_WIDTH` (120) + sum of `colWidths` for visible columns; hidden columns get `display:none` via injected `#colStyle`. **All** / **None** / per-pill toggles; hiding a column clears its filter. **Reset** clears search, all filters, and restores `colDefaultVisible`.
 - **CSV export** — `↓ CSV` builds a Blob from **`window.DB_CSV_DATA`**; download name **`db_comparison.csv`**.
-- **Parsing** — `BOOL_KEYS` in script lists fields coerced to `0/1`; `notes` is `JSON.parse` when non-empty. Adding a boolean column requires updating **`BOOL_KEYS`**, **`boolCols`** (filter pills), thead `th`, row template `bc(...)`, **`colGroups`** / **`colLabels`** / **`colWidths`** (and defaults if needed).
+- **Parsing** — `BOOL_KEYS` in script lists fields coerced to `0/1`; `notes` is `JSON.parse` when non-empty. Adding a boolean column requires updating **`BOOL_KEYS`**, **`boolCols`** (filter pills), thead `th`, row template (see **Boolean caveat renderers**), **`colGroups`** / **`colLabels`** / **`colWidths`** (and defaults if needed).
+
+### Boolean caveat renderers (`boolCell`)
+
+**`boolCell(v, note)`** in `db_comparison_table.html` renders every boolean column (`v` is `0`/`1` after parse; `note` is `r.notes?.<key>`).
+
+| `v` | `note` | Markup |
+|-----|--------|--------|
+| `1` | absent / empty | Green `.yes-dot` |
+| `1` | present | Orange `.yes-dot.note-dot` + `data-tip` (escape `"` in `note` for `dataset.tip`) |
+| `0` | absent / empty | Plain `.no-dot` |
+| `0` | present | **Inactive-note off-dot** `<span class="no-dot inactive-note" data-tip="…">` |
+
+**Inactive-note off-dot:** gray **no** marker plus orange ring (`.inactive-note`) so it reads as “off — see tooltip for why.” Same **`data-tip`** + document-level tooltip handler as on-caveats. In light theme, keep **`.inactive-note`** in the same “no glow” rule as **`.note-dot`**.
+
+**Data:** Put caveat copy in **`notes.<key>`** for that boolean. Omit the key (or use an empty string) when **off** needs no explanation — do **not** leave stray keys for `0` cells unless you intend an off-caveat.
 
 ## Dataset
 
-25 databases in the CSV. **Kuzu** excluded by project choice. **Vespa** and **SurrealDB** were added to the original list. **Turbopuffer** and **ClickHouse** were considered and left out here (analytics-first / narrower fit for this grid than the rest). There is **no** separate caveat inventory in the repo — caveat text exists only in each row’s **`notes`** JSON in `db_comparison_data.js`.
+26 databases in the CSV. **Vespa** and **SurrealDB** were added to the original list. **Turbopuffer** and **ClickHouse** were considered and left out here (analytics-first / narrower fit for this grid than the rest). There is **no** separate caveat inventory in the repo — caveat text exists only in each row’s **`notes`** JSON in `db_comparison_data.js`.
 
 ## CSV schema (`db_comparison_data.js`)
 
@@ -30,7 +45,7 @@ Single export: `window.DB_CSV_DATA` (multi-line CSV string). Edit this file only
 
 **Header (field order):**
 
-`name, tagline, released, vector, graph, oss, selfhost, lightweight, docker, single, lowops, ram, persistence, server, embeddable, traversal, hybrid, rag, cypher, langs, lc, compat, url, src, notes`
+`name, tagline, released, active, vector, graph, oss, selfhost, lightweight, docker, single, lowops, ram, persistence, server, embeddable, traversal, hybrid, rag, cypher, langs, lc, compat, url, src, notes`
 
 **Rules:** Booleans: `1` / `0`. Strings: plain text; double-quote fields that contain commas. `notes`: JSON object for caveat tooltips, CSV-escaped (`""` for quotes inside); empty if none.
 
@@ -39,6 +54,7 @@ Single export: `window.DB_CSV_DATA` (multi-line CSV string). Edit this file only
 | Key | Typical UI |
 |-----|------------|
 | `name` | DB Name |
+| `active` | Status (actively maintained vs discontinued / archived / effectively unmaintained) |
 | `vector`, `graph` | Vector DB, Graph DB |
 | `oss`, `selfhost`, `lightweight`, `docker`, `single`, `lowops` | OSS, Self-hosted, … |
 | `ram`, `persistence`, `server`, `embeddable` | RAM, Persistence, Server, Embeddable |
@@ -47,7 +63,7 @@ Single export: `window.DB_CSV_DATA` (multi-line CSV string). Edit this file only
 | `url`, `src` | URL, Source |
 | `released` | Released (`YYYY-MM`) |
 | `tagline` | Tagline |
-| `notes` | Not shown as a column; drives caveat tooltips on boolean cells |
+| `notes` | Not shown as a column; JSON keys match boolean field ids — a key may supply a caveat for **on** or **off** depending on the cell value (see **`boolCell`**) |
 
 ### Boolean keys — meaning for `1` / `0`
 
@@ -55,6 +71,7 @@ Use these definitions when filling or auditing cells (judgment calls, not vendor
 
 | Key | `1` means |
 |-----|-----------|
+| `active` | **On:** default-branch GitHub activity within the **six months before the last table check (2026-05-04)** or a clearly ongoing commercial/cloud product without a single OSS repo to measure — use **`notes.active`** when the cell stays on but the repo is stale (yes-caveat). **Off:** GitHub repo **archived/read-only**, formal discontinuation, or similar — set **`notes.active`** for an off-caveat via **`boolCell`**. |
 | `vector` | Product supports storing/querying high-dimensional embeddings (vector workload). |
 | `graph` | Graph model: nodes/edges and relationship-centric queries. |
 | `oss` | Source publicly available under an **OSI-approved** license (project’s reading for each product). |
@@ -73,18 +90,22 @@ Use these definitions when filling or auditing cells (judgment calls, not vendor
 | `cypher` | Cypher (or marketed as Cypher-compatible) graph query support. |
 | `lc` | Native LangChain and/or LlamaIndex integration. |
 
+**Release / status audit stamp (2026-05-04):** see **Released** and **Status** header tooltips (`th[data-col="released"]`, `th[data-col="active"]`).
+
 **Other string columns:** `name` — product label; `tagline` — one-line positioning; `released` — approximate first public availability **`YYYY-MM`**; `langs` — official client SDKs (free text); `compat` — OS support without Docker as the assumed path; `url` / `src` — website and repo URLs (empty if none).
 
 ### New boolean columns
 
-Every `BOOL_KEYS` field rendered with **`bc(r.<key>, r.notes?.<key>)`** so `notes.<key>` can show an orange caveat dot when the cell is `1`. If you add a column, keep that pairing in the row template.
+- Render every boolean **`<td>`** with **`boolCell(r.<key>, r.notes?.<key>)`**. Caveats on **off** use the same **`notes.<key>`** mechanism as on — only include text when you want the orange-ring off-dot.
+- Keep **`th[data-tip]`** aligned with what that column measures (not with a separate “off mode” flag; there is none).
 
 ## UI tokens (when editing HTML/CSS)
 
 - Dark bg default `#0d0f14`; accent yes `#4ade80`; caveat yes `#f97316`.
 - Fonts: Space Mono (headers/mono), DM Sans (body); loaded from Google Fonts.
 - Boolean and released columns: width **55px** (`.col-bool`, `.col-released`). Glow on yes-dots off in light theme.
-- **Default visible** toggleable columns: Tagline, Released, Vector DB, Graph DB, OSS, Self-hosted, Persistence, Server, OS Compat, URL, Source (11). DB Name always on; rest via COLUMNS panel.
+- **Off-with-caveat:** `.no-dot.inactive-note` — orange border / shadow on the gray off dot; pair with `data-tip` (see **Boolean caveat renderers**).
+- **Default visible** toggleable columns: Tagline, Released, Status, Vector DB, Graph DB, OSS, Self-hosted, Persistence, Server, OS Compat, URL, Source (12). DB Name always on; rest via COLUMNS panel.
 
 ## Known gaps
 

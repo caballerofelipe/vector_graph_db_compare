@@ -58,7 +58,8 @@
     --tooltip-text: #f9fafb;
   }
   body.light .yes-dot,
-  body.light .note-dot { box-shadow: none !important; }
+  body.light .note-dot,
+  body.light .inactive-note { box-shadow: none !important; }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -297,6 +298,13 @@
     cursor: default;
   }
 
+  /* Status off with explanation — gray dot + orange ring (tooltip shows why). */
+  .inactive-note {
+    border-color: #f97316 !important;
+    box-shadow: 0 0 4px rgba(249,115,22,0.45);
+    cursor: default;
+  }
+
   .db-name {
     font-weight: 600;
     color: var(--text);
@@ -426,7 +434,7 @@
         <button class="btn-theme" id="themeBtn" aria-label="Toggle light/dark theme"></button>
       </div>
     </div>
-    <p>25 databases — vector, graph, and multi-model. Sort any column, filter by feature.</p>
+    <p>26 databases — vector, graph, and multi-model. Sort any column, filter by feature.</p>
   </div>
 
   <div class="controls">
@@ -458,7 +466,8 @@
   <tr>
     <th class="col-db" data-col="name" data-tip="The name of the database or database combination.">DB NAME <span class="arr">↕</span></th>
     <th class="col-tag" data-col="tagline" data-tip="A short description of the database's primary purpose and positioning.">TAGLINE <span class="arr">↕</span></th>
-    <th class="col-released" data-col="released" data-tip="Initial public release — approximate year-month when the product or open-source project was first available to the public (not the latest version).">RELEASED <span class="arr">↕</span></th>
+    <th class="col-released" data-col="released" data-tip="Initial public release — approximate year-month when the product or open-source project was first available to the public (not the latest version). Release labels in this table were last reviewed on 2026-05-04.">RELEASED <span class="arr">↕</span></th>
+    <th class="col-bool" data-col="active" data-tip="Status — whether the product is still a reasonable pick for new work (maintained vs discontinued, archived, or effectively stalled). Checked 2026-05-04 from public GitHub default-branch activity where a repo exists, plus judgment for closed-source rows.">STATUS <span class="arr">↕</span></th>
     <th class="col-bool" data-col="vector" data-tip="Vector DB — stores and queries high-dimensional embeddings for semantic / similarity search. Core feature for AI and RAG apps.">VEC <span class="arr">↕</span></th>
     <th class="col-bool" data-col="graph" data-tip="Graph DB — models data as nodes and edges, optimized for traversing relationships between entities (e.g. knowledge graphs, fraud detection).">GRAPH <span class="arr">↕</span></th>
     <th class="col-bool" data-col="oss" data-tip="Open Source — source code is publicly available under an OSI-approved license. Allows self-hosting, auditing, and forking.">OSS <span class="arr">↕</span></th>
@@ -522,7 +531,7 @@ function parseCSVLine(line) {
   return fields;
 }
 
-const BOOL_KEYS = ['vector','graph','oss','selfhost','lightweight','docker','single','lowops','ram','persistence','server','embeddable','traversal','hybrid','rag','cypher','lc'];
+const BOOL_KEYS = ['active','vector','graph','oss','selfhost','lightweight','docker','single','lowops','ram','persistence','server','embeddable','traversal','hybrid','rag','cypher','lc'];
 
 function parseCSV(text) {
   const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim().split('\n');
@@ -538,6 +547,7 @@ function parseCSV(text) {
 }
 
 const boolCols = [
+  {key:"active",label:"Status"},
   {key:"vector",label:"Vector DB"},
   {key:"graph",label:"Graph DB"},
   {key:"oss",label:"Open source"},
@@ -561,7 +571,7 @@ const filterState = {};
 boolCols.forEach(c => filterState[c.key] = null);
 
 const colGroups = [
-  { label: 'INFO',         cols: ['tagline','released'] },
+  { label: 'INFO',         cols: ['tagline','released','active'] },
   { label: 'TYPE',         cols: ['vector','graph'] },
   { label: 'DEPLOYMENT',   cols: ['oss','selfhost','lightweight','docker','single','lowops'] },
   { label: 'STORAGE',      cols: ['ram','persistence','server','embeddable'] },
@@ -572,6 +582,7 @@ const colGroups = [
 const colLabels = {
   tagline:'Tagline',
   released:'Released',
+  active:'Status',
   vector:'Vector DB', graph:'Graph DB',
   oss:'OSS', selfhost:'Self-hosted', lightweight:'Lightweight', docker:'Docker', single:'Single-node', lowops:'Low ops',
   ram:'RAM-first', persistence:'Persistence', server:'Server', embeddable:'Embeddable',
@@ -579,7 +590,7 @@ const colLabels = {
   langs:'Languages', lc:'LC/LlamaIndex', compat:'OS Compat',
   url:'URL', src:'Source',
 };
-const colDefaultVisible = new Set(['tagline','released','vector','graph','oss','selfhost','persistence','server','compat','url','src']);
+const colDefaultVisible = new Set(['tagline','released','active','vector','graph','oss','selfhost','persistence','server','compat','url','src']);
 const colVisibility = {};
 colGroups.forEach(g => g.cols.forEach(k => colVisibility[k] = colDefaultVisible.has(k)));
 
@@ -587,6 +598,7 @@ const NAME_WIDTH = 120;
 const colWidths = {
   tagline:175,
   released:55,
+  active:55,
   vector:55, graph:55, oss:55, selfhost:55, lightweight:55, docker:55,
   single:55, lowops:55, ram:55, persistence:55, server:55, embeddable:55,
   traversal:55, hybrid:55, rag:55, cypher:55, lc:55,
@@ -688,11 +700,20 @@ document.getElementById('colNoneBtn').addEventListener('click', e => {
 
 let sortCol = 'name', sortDir = 1;
 
-function bc(v, note) {
-  if (!v) return N;
-  if (!note) return Y;
-  const safe = note.replace(/"/g, '&quot;');
-  return `<span class="yes-dot note-dot" data-tip="${safe}"></span>`;
+/**
+ * Boolean table cell: green yes, orange yes if `note`, plain gray no, or orange-ring gray no if `note` while off.
+ * See `context.md` → Boolean caveat renderers.
+ */
+function boolCell(v, note) {
+  const safe = note ? note.replace(/"/g, '&quot;') : '';
+  if (v) {
+    if (!note) return Y;
+    return `<span class="yes-dot note-dot" data-tip="${safe}"></span>`;
+  }
+  if (note) {
+    return `<span class="no-dot inactive-note" data-tip="${safe}"></span>`;
+  }
+  return N;
 }
 
 function render() {
@@ -716,24 +737,25 @@ function render() {
     <td class="col-db db-name">${r.name}</td>
     <td class="col-tag tagline" data-col="tagline" title="${r.tagline}">${r.tagline}</td>
     <td class="col-released" data-col="released" title="${r.released || ''}">${r.released || '—'}</td>
-    <td class="col-bool" data-col="vector" style="text-align:center">${bc(r.vector,r.notes?.vector)}</td>
-    <td class="col-bool" data-col="graph" style="text-align:center">${bc(r.graph,r.notes?.graph)}</td>
-    <td class="col-bool" data-col="oss" style="text-align:center">${bc(r.oss,r.notes?.oss)}</td>
-    <td class="col-bool" data-col="selfhost" style="text-align:center">${bc(r.selfhost,r.notes?.selfhost)}</td>
-    <td class="col-bool" data-col="lightweight" style="text-align:center">${bc(r.lightweight,r.notes?.lightweight)}</td>
-    <td class="col-bool" data-col="docker" style="text-align:center">${bc(r.docker,r.notes?.docker)}</td>
-    <td class="col-bool" data-col="single" style="text-align:center">${bc(r.single,r.notes?.single)}</td>
-    <td class="col-bool" data-col="lowops" style="text-align:center">${bc(r.lowops,r.notes?.lowops)}</td>
-    <td class="col-bool" data-col="ram" style="text-align:center">${bc(r.ram,r.notes?.ram)}</td>
-    <td class="col-bool" data-col="persistence" style="text-align:center">${bc(r.persistence,r.notes?.persistence)}</td>
-    <td class="col-bool" data-col="server" style="text-align:center">${bc(r.server,r.notes?.server)}</td>
-    <td class="col-bool" data-col="embeddable" style="text-align:center">${bc(r.embeddable,r.notes?.embeddable)}</td>
-    <td class="col-bool" data-col="traversal" style="text-align:center">${bc(r.traversal,r.notes?.traversal)}</td>
-    <td class="col-bool" data-col="hybrid" style="text-align:center">${bc(r.hybrid,r.notes?.hybrid)}</td>
-    <td class="col-bool" data-col="rag" style="text-align:center">${bc(r.rag,r.notes?.rag)}</td>
-    <td class="col-bool" data-col="cypher" style="text-align:center">${bc(r.cypher,r.notes?.cypher)}</td>
+    <td class="col-bool" data-col="active" style="text-align:center">${boolCell(r.active,r.notes?.active)}</td>
+    <td class="col-bool" data-col="vector" style="text-align:center">${boolCell(r.vector,r.notes?.vector)}</td>
+    <td class="col-bool" data-col="graph" style="text-align:center">${boolCell(r.graph,r.notes?.graph)}</td>
+    <td class="col-bool" data-col="oss" style="text-align:center">${boolCell(r.oss,r.notes?.oss)}</td>
+    <td class="col-bool" data-col="selfhost" style="text-align:center">${boolCell(r.selfhost,r.notes?.selfhost)}</td>
+    <td class="col-bool" data-col="lightweight" style="text-align:center">${boolCell(r.lightweight,r.notes?.lightweight)}</td>
+    <td class="col-bool" data-col="docker" style="text-align:center">${boolCell(r.docker,r.notes?.docker)}</td>
+    <td class="col-bool" data-col="single" style="text-align:center">${boolCell(r.single,r.notes?.single)}</td>
+    <td class="col-bool" data-col="lowops" style="text-align:center">${boolCell(r.lowops,r.notes?.lowops)}</td>
+    <td class="col-bool" data-col="ram" style="text-align:center">${boolCell(r.ram,r.notes?.ram)}</td>
+    <td class="col-bool" data-col="persistence" style="text-align:center">${boolCell(r.persistence,r.notes?.persistence)}</td>
+    <td class="col-bool" data-col="server" style="text-align:center">${boolCell(r.server,r.notes?.server)}</td>
+    <td class="col-bool" data-col="embeddable" style="text-align:center">${boolCell(r.embeddable,r.notes?.embeddable)}</td>
+    <td class="col-bool" data-col="traversal" style="text-align:center">${boolCell(r.traversal,r.notes?.traversal)}</td>
+    <td class="col-bool" data-col="hybrid" style="text-align:center">${boolCell(r.hybrid,r.notes?.hybrid)}</td>
+    <td class="col-bool" data-col="rag" style="text-align:center">${boolCell(r.rag,r.notes?.rag)}</td>
+    <td class="col-bool" data-col="cypher" style="text-align:center">${boolCell(r.cypher,r.notes?.cypher)}</td>
     <td class="col-pl langs-cell" data-col="langs" title="${r.langs}">${r.langs}</td>
-    <td class="col-bool" data-col="lc" style="text-align:center">${bc(r.lc,r.notes?.lc)}</td>
+    <td class="col-bool" data-col="lc" style="text-align:center">${boolCell(r.lc,r.notes?.lc)}</td>
     <td class="col-oc compat-cell" data-col="compat" title="${r.compat}">${r.compat}</td>
     <td class="col-url" data-col="url" style="text-align:center">${r.url ? `<a href="${r.url}" target="_blank">↗ site</a>` : ''}</td>
     <td class="col-src" data-col="src" style="text-align:center">${r.src ? `<a href="${r.src}" target="_blank" class="src-link">↗ gh</a>` : '<span style="color:var(--no-text)">–</span>'}</td>
