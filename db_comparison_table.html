@@ -325,6 +325,7 @@
 
   .col-db   { width: 120px; }
   .col-tag  { width: 175px; }
+  .col-released { width: 55px; font-variant-numeric: tabular-nums; }
   .col-bool { width: 55px; text-align: center; }
   .col-pl   { width: 130px; }
   .col-oc   { width: 130px; }
@@ -457,6 +458,7 @@
   <tr>
     <th class="col-db" data-col="name" data-tip="The name of the database or database combination.">DB NAME <span class="arr">↕</span></th>
     <th class="col-tag" data-col="tagline" data-tip="A short description of the database's primary purpose and positioning.">TAGLINE <span class="arr">↕</span></th>
+    <th class="col-released" data-col="released" data-tip="Initial public release — approximate year-month when the product or open-source project was first available to the public (not the latest version).">RELEASED <span class="arr">↕</span></th>
     <th class="col-bool" data-col="vector" data-tip="Vector DB — stores and queries high-dimensional embeddings for semantic / similarity search. Core feature for AI and RAG apps.">VEC <span class="arr">↕</span></th>
     <th class="col-bool" data-col="graph" data-tip="Graph DB — models data as nodes and edges, optimized for traversing relationships between entities (e.g. knowledge graphs, fraud detection).">GRAPH <span class="arr">↕</span></th>
     <th class="col-bool" data-col="oss" data-tip="Open Source — source code is publicly available under an OSI-approved license. Allows self-hosting, auditing, and forking.">OSS <span class="arr">↕</span></th>
@@ -559,7 +561,7 @@ const filterState = {};
 boolCols.forEach(c => filterState[c.key] = null);
 
 const colGroups = [
-  { label: 'INFO',         cols: ['tagline'] },
+  { label: 'INFO',         cols: ['tagline','released'] },
   { label: 'TYPE',         cols: ['vector','graph'] },
   { label: 'DEPLOYMENT',   cols: ['oss','selfhost','lightweight','docker','single','lowops'] },
   { label: 'STORAGE',      cols: ['ram','persistence','server','embeddable'] },
@@ -569,6 +571,7 @@ const colGroups = [
 ];
 const colLabels = {
   tagline:'Tagline',
+  released:'Released',
   vector:'Vector DB', graph:'Graph DB',
   oss:'OSS', selfhost:'Self-hosted', lightweight:'Lightweight', docker:'Docker', single:'Single-node', lowops:'Low ops',
   ram:'RAM-first', persistence:'Persistence', server:'Server', embeddable:'Embeddable',
@@ -576,13 +579,14 @@ const colLabels = {
   langs:'Languages', lc:'LC/LlamaIndex', compat:'OS Compat',
   url:'URL', src:'Source',
 };
-const colDefaultVisible = new Set(['tagline','vector','graph','oss','selfhost','persistence','server','compat','url','src']);
+const colDefaultVisible = new Set(['tagline','released','vector','graph','oss','selfhost','persistence','server','compat','url','src']);
 const colVisibility = {};
 colGroups.forEach(g => g.cols.forEach(k => colVisibility[k] = colDefaultVisible.has(k)));
 
 const NAME_WIDTH = 120;
 const colWidths = {
   tagline:175,
+  released:55,
   vector:55, graph:55, oss:55, selfhost:55, lightweight:55, docker:55,
   single:55, lowops:55, ram:55, persistence:55, server:55, embeddable:55,
   traversal:55, hybrid:55, rag:55, cypher:55, lc:55,
@@ -698,7 +702,7 @@ function render() {
     if (filterState[k] === true) rows = rows.filter(r => r[k] === 1);
     else if (filterState[k] === false) rows = rows.filter(r => r[k] === 0);
   });
-  if (q) rows = rows.filter(r => (r.name + r.tagline + r.langs + r.compat).toLowerCase().includes(q));
+  if (q) rows = rows.filter(r => (r.name + r.tagline + (r.released || '') + r.langs + r.compat).toLowerCase().includes(q));
   rows.sort((a, b) => {
     let av = a[sortCol], bv = b[sortCol];
     if (typeof av === 'number') return sortDir * (av - bv);
@@ -711,6 +715,7 @@ function render() {
   tbody.innerHTML = rows.map(r => `<tr>
     <td class="col-db db-name">${r.name}</td>
     <td class="col-tag tagline" data-col="tagline" title="${r.tagline}">${r.tagline}</td>
+    <td class="col-released" data-col="released" title="${r.released || ''}">${r.released || '—'}</td>
     <td class="col-bool" data-col="vector" style="text-align:center">${bc(r.vector,r.notes?.vector)}</td>
     <td class="col-bool" data-col="graph" style="text-align:center">${bc(r.graph,r.notes?.graph)}</td>
     <td class="col-bool" data-col="oss" style="text-align:center">${bc(r.oss,r.notes?.oss)}</td>

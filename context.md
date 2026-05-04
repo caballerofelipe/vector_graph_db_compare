@@ -2,15 +2,15 @@
 
 ## What was built
 
-A self-contained, interactive HTML file (`db_comparison_table.html`) comparing 25 databases (vector, graph, and multi-model). The table shows 23 visible columns (name through source); row data also includes a `notes` field for caveat tooltips. It has:
+A self-contained, interactive HTML file (`db_comparison_table.html`) comparing 25 databases (vector, graph, and multi-model). The table shows the columns listed below (from DB name through source); row data also includes a `notes` field for caveat tooltips (not shown as its own column). It has:
 
 - **Sortable columns** — click any header to sort ascending/descending
 - **Three-state feature filter pills** — click to cycle: none (no filter) → on (green, require feature) → off (pink, exclude feature). Pills for hidden columns are automatically suppressed, and their active filters cleared.
-- **Text search** — filters by name, tagline, language, or OS
+- **Text search** — filters by name, tagline, released date, language, or OS
 - **Hover tooltips** on every column header and every filter pill (JS-driven fixed-position `div` with document-level event delegation)
 - **Cell-level caveat notes** — boolean cells with a nuance show an orange dot instead of green; hovering reveals the note. Only "on" cells with genuine caveats get this treatment; "off" cells never show a note indicator.
 - **Light/dark theme toggle** — three-state (System / Light / Dark), defaults to system `prefers-color-scheme`
-- **Column visibility toggle** — collapsible `COLUMNS ▶` section in the controls panel. Columns grouped by category (Info, Type, Deployment, Storage, Capabilities, Integrations, Links). Header shows `(N/22 shown)` count when any are hidden, plus **All** / **None** buttons to select or deselect every column at once. Table `min-width` is computed dynamically from visible column widths so horizontal scroll shrinks with the table. DB Name is always visible; all other 22 columns are toggleable. "Reset all" restores to the default visible set.
+- **Column visibility toggle** — collapsible `COLUMNS ▶` section in the controls panel. Columns grouped by category (Info, Type, Deployment, Storage, Capabilities, Integrations, Links). Header shows `(N/M shown)` count when any are hidden, plus **All** / **None** buttons to select or deselect every column at once. Table `min-width` is computed dynamically from visible column widths so horizontal scroll shrinks with the table. DB Name is always visible; all other columns are toggleable. "Reset all" restores to the default visible set.
 - **Persisted view state** — search text, filter pill states, and column visibility are saved to `localStorage` (key `dbcmp`) on every change and restored on page load. No UI needed; the page just looks like the user left it.
 - **CSV export** — `↓ CSV` button in the header downloads the data on the fly from the same in-memory string via a Blob.
 
@@ -37,6 +37,7 @@ Turbopuffer and ClickHouse were considered but not added (too niche / primarily 
 |---|---|---|
 | DB Name | `name` | Name of the database or combination |
 | Tagline | `tagline` | Short description of primary purpose |
+| Released | `released` | Approximate first public release (`YYYY-MM`) |
 | Vec | `vector` | Vector DB — stores/queries high-dimensional embeddings |
 | Graph | `graph` | Graph DB — nodes + edges, relationship traversal |
 | OSS | `oss` | Open source under an OSI-approved license |
@@ -102,12 +103,12 @@ A green "on" dot turns orange when the feature has a caveat worth knowing. Hover
 - Green accent (`#4ade80`) for active states and yes-dots
 - Orange dot (`#f97316`) for yes-with-caveat cells
 - Boolean values shown as green/orange glowing dot (yes) or dark empty dot (no); glow suppressed in light theme for both green and orange dots
-- `col-bool` column width: 55px
+- `col-bool` and `col-released` column width: 55px
 - Fully self-contained — no external runtime dependencies (fonts load from Google Fonts)
 
 ### Default column visibility
 
-10 columns visible by default: Tagline, Vector DB, Graph DB, OSS, Self-hosted, Persistence, Server, OS Compat, URL, Source. The remaining 12 are hidden by default and can be toggled on via the COLUMNS panel.
+11 toggleable columns visible by default: Tagline, Released, Vector DB, Graph DB, OSS, Self-hosted, Persistence, Server, OS Compat, URL, Source. The remaining toggleable columns are hidden by default and can be turned on via the COLUMNS panel.
 
 ---
 
@@ -122,7 +123,7 @@ A green "on" dot turns orange when the feature has a caveat worth knowing. Hover
 
 - `db_comparison_table.html` — main page; loads data from `db_comparison_data.js`
 - `db_comparison_data.js` — single source of truth for all DB records; CSV string exposed as `window.DB_CSV_DATA`, parsed on load. To update data: edit this file only.
-  - Header row keys: `name, tagline, vector, graph, oss, selfhost, lightweight, docker, single, lowops, ram, persistence, server, embeddable, traversal, hybrid, rag, cypher, langs, lc, compat, url, src, notes`
+  - Header row keys: `name, tagline, released, vector, graph, oss, selfhost, lightweight, docker, single, lowops, ram, persistence, server, embeddable, traversal, hybrid, rag, cypher, langs, lc, compat, url, src, notes`
   - Boolean columns: `1` / `0`; string columns: plain text, double-quoted when containing commas
   - `notes` column: JSON object, double-quoted and CSV-escaped (`""` inside); blank for rows with no caveats
 - `context.md` — this file
