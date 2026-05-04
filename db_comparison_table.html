@@ -733,7 +733,7 @@ function render() {
     <td class="col-bool" data-col="rag" style="text-align:center">${bc(r.rag,r.notes?.rag)}</td>
     <td class="col-bool" data-col="cypher" style="text-align:center">${bc(r.cypher,r.notes?.cypher)}</td>
     <td class="col-pl langs-cell" data-col="langs" title="${r.langs}">${r.langs}</td>
-    <td class="col-bool" data-col="lc" style="text-align:center">${bc(r.lc)}</td>
+    <td class="col-bool" data-col="lc" style="text-align:center">${bc(r.lc,r.notes?.lc)}</td>
     <td class="col-oc compat-cell" data-col="compat" title="${r.compat}">${r.compat}</td>
     <td class="col-url" data-col="url" style="text-align:center">${r.url ? `<a href="${r.url}" target="_blank">↗ site</a>` : ''}</td>
     <td class="col-src" data-col="src" style="text-align:center">${r.src ? `<a href="${r.src}" target="_blank" class="src-link">↗ gh</a>` : '<span style="color:var(--no-text)">–</span>'}</td>
