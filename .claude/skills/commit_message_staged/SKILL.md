@@ -19,6 +19,6 @@ Tag line
 - task n
 ````
 
-Where Tag line is a line that can be checked in the log to identify the main idea for the commit. Below the tag line there should be a list of tasks.
+Where Tag line is a line that can be checked in the log to identify the main idea for the commit. Below the tag line there should be a list of tasks **but** the list is not necessary if the commit fits only in the Tag line, only the Tag line is preferred over over explicit tasks.
 
-Ask me if I approve the commit message in tmp_commit_message.txt, if I do, ask me if I want to use tmp_commit_message.txt to do the commit and do it for me. After you're done, remove the file.
+Ask me if I approve the commit message in tmp_commit_message.txt, if I do, ask me if I want to do the commit and do it for me. After you're done, remove the file. Do not any mention about an agent helping doing this commit.
