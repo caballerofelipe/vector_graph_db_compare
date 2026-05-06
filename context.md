@@ -1,12 +1,12 @@
 # DB Comparison Table — LLM context
 
-Dense notes for assistants working in this repo. For how to run the page and what it does for users, see `README.md`.
+Dense notes for assistants working in this repo. For how to run the page and what it does for users, see `README.md`. A human-oriented companion piece lives off-repo as the Substack **article** at `https://sometech.substack.com/p/a-comparison-table-for-vector-and` (rationale and commentary only — this file is the source of truth for implementation and data rules).
 
 **Page title** (in `db_comparison_table.html`): “Vector **and/or** Graph DB …” — signals that listed products are not required to be both vector and graph engines.
 
 ## Stack
 
-- `db_comparison_table.html` loads `db_comparison_data.js` (same directory). No build step.
+- `db_comparison_table.html` loads `db_comparison_data.js` (same directory). No build step. Footer: **article** (Substack companion — URL in opening paragraph), **contact** (GitHub issues).
 - View state persists under `localStorage` key **`dbcmp`** as JSON: **`q`**, **`filters`** (pill map), **`cols`** (visibility map). Theme is not persisted.
 - Caveat copy lives in the CSV **`notes`** column (JSON keyed by boolean field ids). Every boolean column uses **`boolCell(v, note)`** (see **Boolean caveat renderers**): **on** + `note` → orange yes-dot; **on** without `note` → green; **off** + `note` → orange-ring gray off-dot; **off** without `note` → plain gray dot.
 - Feature pills for a column are hidden when that column is hidden; their filters are cleared.
@@ -40,7 +40,15 @@ Dense notes for assistants working in this repo. For how to run the page and wha
 
 ## Dataset
 
-26 databases in the CSV. **Vespa** and **SurrealDB** were added to the original list. **Turbopuffer** and **ClickHouse** were considered and left out here (analytics-first / narrower fit for this grid than the rest). There is **no** separate caveat inventory in the repo — caveat text exists only in each row’s **`notes`** JSON in `db_comparison_data.js`.
+- **Source of truth:** In `db_comparison_data.js`, each data line of `window.DB_CSV_DATA` (the multiline string at the top of the file) is one product row, excluding the CSV header line. The stats row’s “*M* databases” total is computed at runtime from that file — **do not keep a manual row count in this document**; it will drift.
+
+- **Row order:** Those data rows (not the header) are kept **sorted alphabetically by `name`**, case-insensitive (compare `name.toLowerCase()` with string `<` / `>`). Preserve that order when adding or renaming rows so the file stays aligned with `README.md` (product list under **Scope and limitations**).
+
+- **Deliberately omitted products:** **Turbopuffer** and **ClickHouse** were considered and left out (analytics-first / narrower fit for this grid than the rest). **Cognee** ([https://github.com/topoteretes/cognee](https://github.com/topoteretes/cognee)) is intentionally omitted: it is an agent **memory control plane** (ingestion, pipelines, recall APIs) that uses embeddings and graph-style structure, not a first-class vector or graph **database** product comparable row-for-row with the stores in the table.
+
+- **Caveats:** There is **no** separate caveat inventory file. Caveat text exists only in each row’s **`notes`** JSON in `db_comparison_data.js`.
+
+- **Editing `db_comparison_data.js`:** The CSV is embedded in a JavaScript **template literal** (grave-accent delimiters). A raw grave accent inside the CSV body ends the literal early and **breaks the page load**. Do not wrap paths or commands in Markdown-style code ticks inside the CSV text; use plain text. If you truly need that character inside the string, use the normal JavaScript template-literal escape (backslash immediately before the grave accent).
 
 ## CSV schema (`db_comparison_data.js`)
 
@@ -48,7 +56,7 @@ Single export: `window.DB_CSV_DATA` (multi-line CSV string). Edit this file only
 
 **Header (field order):**
 
-`name, tagline, released, active, vector, graph, oss, selfhost, lightweight, docker, single, lowops, ram, persistence, server, embeddable, traversal, hybrid, rag, cypher, lc, langs, compat, url, src, notes`
+`name,tagline,released,active,vector,graph,oss,selfhost,lightweight,docker,single,lowops,ram,persistence,server,embeddable,traversal,hybrid,rag,cypher,lc,langs,compat,url,src,notes` (matches the embedded string in `db_comparison_data.js`; no spaces after commas)
 
 **Rules:** Booleans: `1` / `0`. Strings: plain text; double-quote fields that contain commas. `notes`: JSON object for caveat tooltips, CSV-escaped (`""` for quotes inside); empty if none.
 

@@ -1,8 +1,10 @@
 # Vector and/or graph database comparison
 
-This repository holds a **standalone comparison table** for twenty-six vector, graph, and multi-model databases (products may be vector-only, graph-only, or both). Open `db_comparison_table.html` in a browser to explore sortable columns, feature filters, search, column visibility, light/dark themes, CSV export, and caveat tooltips where a boolean needs nuance (including some **off** cells — see `context.md`, *Boolean caveat renderers*).
+This repository holds a **standalone comparison table** for twenty-eight vector, graph, and multi-model databases (products may be vector-only, graph-only, or both). Open `db_comparison_table.html` in a browser to explore sortable columns, feature filters, search, column visibility, light/dark themes, CSV export, and caveat tooltips where a boolean needs nuance (including some **off** cells — see `context.md`, *Boolean caveat renderers*).
 
 There is **no build step** and no server required. The page loads data from `db_comparison_data.js` next to it (same folder).
+
+Companion write-up (narrative and framing for the grid): [article](https://sometech.substack.com/p/a-comparison-table-for-vector-and). The same link appears in the footer of `db_comparison_table.html`.
 
 ## Quick start
 
@@ -51,6 +53,39 @@ Exact column keys, formatting rules, **boolean caveat UI (`boolCell` — on- and
 
 The set of products and the boolean judgments are **opinionated heuristics** for comparison, not vendor specifications. Always confirm licensing, deployment, and features on each product’s official site.
 
-The table lists **26** curated systems (vector, graph, and multi-model), each with a **Status** column (`active` in the CSV). As of **2026-05-04**, that flag was checked against public GitHub default-branch dates (six-month freshness window) and archive state where a repo exists, with closed-source rows judged separately. **Vespa** and **SurrealDB** were added to the original list. Other engines (for example ClickHouse or Turbopuffer) were left out when they did not fit the same “retrieval + graph” comparison frame.
+The comparison table includes **28** systems (vector-only, graph-only, or both), each with a **Status** column (`active` in the CSV). As of **2026-05-04**, that flag reflects public GitHub default-branch activity (six-month freshness window) and archive state where a repo exists, with closed-source rows judged separately.
+
+**Rows in the table** (alphabetical by product `name`, case-insensitive — same order as `db_comparison_data.js` and the page):
+
+- Amazon Neptune  
+- ArangoDB  
+- ArcadeDB  
+- Chroma  
+- CogDB  
+- CozoDB  
+- Elasticsearch  
+- FAISS  
+- FalkorDB  
+- JanusGraph  
+- Kuzu  
+- LanceDB  
+- Memgraph  
+- Milvus  
+- MongoDB Atlas Vector  
+- Neo4j  
+- OrientDB  
+- PG + pgvector + AGE  
+- pgvector  
+- pgvectorscale  
+- Pinecone  
+- Qdrant  
+- Redis Vector  
+- RyuGraph  
+- SurrealDB  
+- TigerGraph  
+- Vespa  
+- Weaviate  
+
+Deliberate omissions (why some well-known engines are absent) are documented in `context.md` under **Dataset**.
 
 The table is aimed at **desktop** use: expect horizontal scrolling on small screens. Tooltip behavior near screen edges may still need polish.
