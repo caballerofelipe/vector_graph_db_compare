@@ -1,6 +1,6 @@
 # Vector and/or graph database comparison
 
-This repository holds a **standalone comparison table** for twenty-eight vector, graph, and multi-model databases (products may be vector-only, graph-only, or both). Open `db_comparison_table.html` in a browser to explore sortable columns, feature filters, search, column visibility, light/dark themes, CSV export, and caveat tooltips where a boolean needs nuance (including some **off** cells — see `context.md`, *Boolean caveat renderers*).
+This repository holds a **standalone comparison table** for twenty-eight vector, graph, and multi-model databases (products may be vector-only, graph-only, or both). Open `db_comparison_table.html` in a browser for sortable columns, feature filters, search, column visibility, themes, CSV export, columns for **ideal use**, **implementation language**, and **GitHub stars** (when linked), plus **hover tooltips** for boolean caveats and for full text when cells truncate. See `context.md` (*Boolean caveat renderers*, *Tooltips*) for rendering rules.
 
 There is **no build step** and no server required. The page loads data from `db_comparison_data.js` next to it (same folder).
 
@@ -21,11 +21,11 @@ Then visit `http://localhost:8765/db_comparison_table.html`.
 
 ## What you get
 
-- **Boolean legend** — above the table, the same line as “Showing *N* of *M* databases” shows what each dot style means (yes / yes with caveat / no / no with caveat); caveat cells use tooltips on hover.
+- **Boolean legend** — above the table, the same line as “Showing *N* of *M* databases” shows what each dot style means (yes / yes with caveat / no / no with caveat); caveat cells use the floating tooltip on hover.
 - **Sortable columns** — click headers to toggle ascending/descending order.
 - **Feature pills** — three-state filters (no filter / require “on” / exclude “off”) for boolean-style capabilities.
-- **Search** — narrows rows by name, tagline, release date, languages, or OS support text (the LangChain/LlamaIndex column is not part of the search string).
-- **Integration columns** — **LangChain / LlamaIndex (LC/LI)** sits before **Languages** in the table and in the CSV column order (after Cypher).
+- **Search** — narrows rows by name, tagline, ideal-use text, release date, client-library languages, implementation language, GitHub star count digits, or OS support text (the LangChain/LlamaIndex column is not part of the search string).
+- **INFO vs integrations** — after **tagline**, the table includes **Ideal use** (**`ideal`** in the CSV); **released** dates and **GH ★** use a monospace/tabular font for readability. **LangChain / LlamaIndex (LC/LI)** sits before **Languages** and **implementation language**, then **OS compat**, in both the UI and CSV (after **Cypher**). **LINKS** (**URL**, **SOURCE**, **GH stars**) are their own toggle group.
 - **Caveats** — optional `notes.<key>` strings can annotate boolean cells when **on** or **off**; rendering is **`boolCell`** (see `context.md` → *Boolean caveat renderers*). Tooltips show caveat text where the UI marks a cell as having a note.
 - **Themes** — cycles system → light → dark via the header control. **Theme choice is not saved**; reload always starts from system until you click again.
 - **Columns** — show or hide column groups. **Search, filters, and column visibility** persist in the browser (`localStorage`, key `dbcmp`).
@@ -45,7 +45,7 @@ Fonts (Space Mono, DM Sans) load from Google Fonts; otherwise the experience is 
 
 ## Updating the data
 
-Edit `db_comparison_data.js` only. The embedded CSV uses a fixed header row; boolean columns use `1` / `0`; fields with commas are double-quoted; the `notes` column holds optional JSON (CSV-escaped) for per-column caveat text (`notes.<key>`). A key may supply text for **on**, **off**, or both, depending on the row and what you want **`boolCell`** to show (see `context.md` → *Boolean caveat renderers*). After **Cypher**, integration fields are ordered **`lc`, `langs`, `compat`** — keep that order so columns align with the HTML table.
+Edit `db_comparison_data.js` only. The embedded CSV uses a fixed header row; boolean columns use `1` / `0`; fields with commas are double-quoted; the `notes` column holds optional JSON (CSV-escaped) for per-column caveat text (`notes.<key>`). A key may supply text for **on**, **off**, or both, depending on the row and what you want **`boolCell`** to show (see `context.md` → *Boolean caveat renderers*). Field order staples: **`name`**, **`tagline`**, **`ideal`**, **`released`**, then booleans through **`lc`**, then **`langs`**, **`implang`**, **`compat`**, **`url`**, **`src`**, **`ghstars`**, **`notes`** — keep that order so export and **`db_comparison_table.html`** stay aligned (see **`context.md` → CSV schema**). Refresh **`ghstars`** from GitHub’s API (`stargazers_count`) when updating counts.
 
 Exact column keys, formatting rules, **boolean caveat UI (`boolCell` — on- and off-caveats from `notes`)**, and **what each boolean column is supposed to mean** are in `context.md` (**CSV schema**, **Boolean keys**, and **Boolean caveat renderers**).
 
@@ -88,4 +88,4 @@ The comparison table includes **28** systems (vector-only, graph-only, or both),
 
 Deliberate omissions (why some well-known engines are absent) are documented in `context.md` under **Dataset**.
 
-The table is aimed at **desktop** use: expect horizontal scrolling on small screens. Tooltip behavior near screen edges may still need polish.
+The table is aimed at **desktop** use: expect horizontal scrolling on small screens. Tooltips clamp to the viewport using measured size (**`context.md`** → **Tooltips**).

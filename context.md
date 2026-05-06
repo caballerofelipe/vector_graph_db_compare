@@ -15,13 +15,13 @@ Dense notes for assistants working in this repo. For how to run the page and wha
 
 - **Theme** — `themeMode` cycles **system → light → dark → system** (`nextMode` in script). Default is system (`prefers-color-scheme`). `body.light` toggles light palette. **Not** stored in `localStorage` (resets on reload).
 - **Feature filter pills** — Each boolean column’s filter is `null | true | false`. Click cycles **`null` → `true` (require on, green `.on`) → `false` (exclude off, pink `.off`) → `null`**. `true` keeps rows with `r[key] === 1`; `false` keeps rows with `r[key] === 0`.
-- **Text search** — Case-insensitive substring over **`name` + `tagline` + `released` + `langs` + `compat`** only (not URL/source).
-- **Sort** — `sortCol` + `sortDir` (`1` or `-1`). Clicking the active header flips direction; a new column starts ascending. Numbers sort numerically; everything else uses `localeCompare` on strings.
-- **Tooltips** — One fixed `#tooltip` div; **document-level** `mouseover` / `mousemove` / `mouseout` with `e.target.closest('[data-tip]')`. Copy comes from `dataset.tip` (table headers use `th[data-tip]`; header tips are scraped into `colTips` for filter pills). **Position:** cursor + 14px; if `x + 240 > innerWidth` then `x = clientX - 240`; if `y + 120 > innerHeight` then `y = clientY - 90` — coarse, hence awkward near edges.
-- **Column visibility** — `colGroups` labels: INFO, TYPE, DEPLOYMENT, STORAGE, CAPABILITIES, INTEGRATIONS, LINKS (see script for key lists). **`INTEGRATIONS`** uses **`['lc','langs','compat']`** — **LC/LI** appears before **Languages** in both the table header/body and the CSV field order (after **Cypher**). `#tbl` **`minWidth`** = `NAME_WIDTH` (120) + sum of `colWidths` for visible columns; hidden columns get `display:none` via injected `#colStyle`. **All** / **None** / per-pill toggles; hiding a column clears its filter. **Reset** clears search, all filters, and restores `colDefaultVisible`.
-- **Stats row** — `#statsCount` shows filtered row count (“Showing *N* of *M* databases”). Static **`.stats-legend`** on the same row (flex; `margin-left: auto` on the legend) lists the four **`boolCell`** dot styles: green yes, orange yes (caveat), plain gray no, gray no + orange ring (off caveat). Full caveat copy is only on cells with **`data-tip`**, not duplicated in the legend.
+- **Text search** — Case-insensitive substring over **`name` + `tagline` + `ideal` + `released` + `langs` + `implang` + `compat` + string form of `ghstars` (when present)** only (not URL/source).
+- **Sort** — `sortCol` + `sortDir` (`1` or `-1`). Clicking the active header flips direction; a new column starts ascending. Boolean fields (and other numeric `0/1` columns) sort numerically; **`ghstars`** sorts numerically when both sides have counts, with **`null`** (no **`ghstars`** cell) sorted **after** all numbers ascending and **before** all numbers descending. All other columns use `localeCompare` on strings (**`url`** and **`src`** included — empty sorts as empty string). **`th.onclick`** resets every **`.arr`** to **↕** then sets **↑ / ↓** on the active header only if **`querySelector('.arr')`** exists (defensive).
+- **Tooltips** — One fixed `#tooltip` div; **document-level** `mouseover` / `mousemove` / `mouseout` with `e.target.closest('[data-tip]')`. Copy comes from `dataset.tip` (table headers use `th[data-tip]`; header tips are scraped into `colTips` for filter pills). **Text columns** (**`tagline`**, **`ideal`**, **`released`**, **`langs`**, **`implang`**, **`compat`**, **`ghstars`**) set **`data-tip`** on **`td`**s with the **full cell text** via **`cellTip`** / **`dataTipEscaped`** (omit when empty). **Position:** **`positionTip`** uses **`offsetWidth` / `offsetHeight`** after text is applied: default southeast of cursor (`clientX/Y` + **`pad`**); flips northwest when that would clip the viewport, then clamps to margins (avoids a fixed guessed width separating the tooltip from the pointer).
+- **Column visibility** — `colGroups` labels: INFO, TYPE, DEPLOYMENT, STORAGE, CAPABILITIES, INTEGRATIONS, LINKS (see script for key lists). **`INFO`** uses **`['tagline','ideal','released','active']`** (**Ideal use** follows **Tagline** in the table and CSV). **`INTEGRATIONS`** uses **`['lc','langs','implang','compat']`**; **`LINKS`** uses **`['url','src','ghstars']`** — **LC/LI** appears before **Languages** and **implementation language (`implang`)** in both the table header/body and the CSV field order (after **Cypher**). `#tbl` **`minWidth`** = `NAME_WIDTH` (120) + sum of `colWidths` for visible columns; hidden columns get `display:none` via injected `#colStyle`. **All** / **None** / per-pill toggles; hiding a column clears its filter. **Reset** clears search, all filters, and restores `colDefaultVisible`.
+- **Stats row** — `#statsCount` shows filtered row count (“Showing *N* of *M* databases”). Static **`.stats-legend`** on the same row (flex; `margin-left: auto` on the legend) lists the four **`boolCell`** dot styles: green yes, orange yes (caveat), plain gray no, gray no + orange ring (off caveat). The legend does **not** repeat caveat wording or long text-cell copy; **`data-tip`** on boolean caveat markers and on **text** **`td`**s (see **Tooltips**) holds full text.
 - **CSV export** — `↓ CSV` builds a Blob from **`window.DB_CSV_DATA`**; download name **`db_comparison.csv`**.
-- **Parsing** — `BOOL_KEYS` in script lists fields coerced to `0/1`; `notes` is `JSON.parse` when non-empty. Adding a boolean column requires updating **`BOOL_KEYS`**, **`boolCols`** (filter pills), thead `th`, row template (see **Boolean caveat renderers**), **`colGroups`** / **`colLabels`** / **`colWidths`** (and defaults if needed).
+- **Parsing** — `BOOL_KEYS` in script lists fields coerced to `0/1`; **`ghstars`** is coerced to **`number \| null`** (empty cell → null); `notes` is `JSON.parse` when non-empty. Adding a **boolean** column requires updating **`BOOL_KEYS`**, **`boolCols`** (filter pills), thead `th`, row template (see **Boolean caveat renderers**), **`colGroups`** / **`colLabels`** / **`colWidths`** (and **`colDefaultVisible`** / search if needed). Adding a **free-text** column requires header + body **`td`**, CSV key in **`db_comparison_data.js`**, the same **`col*`** maps, and (if the column should show **`#tooltip`** on hover) **`cellTip(...)`** wrapping in the row template.
 
 ### Boolean caveat renderers (`boolCell`)
 
@@ -56,7 +56,7 @@ Single export: `window.DB_CSV_DATA` (multi-line CSV string). Edit this file only
 
 **Header (field order):**
 
-`name,tagline,released,active,vector,graph,oss,selfhost,lightweight,docker,single,lowops,ram,persistence,server,embeddable,traversal,hybrid,rag,cypher,lc,langs,compat,url,src,notes` (matches the embedded string in `db_comparison_data.js`; no spaces after commas)
+`name,tagline,ideal,released,active,vector,graph,oss,selfhost,lightweight,docker,single,lowops,ram,persistence,server,embeddable,traversal,hybrid,rag,cypher,lc,langs,implang,compat,url,src,ghstars,notes` (matches the embedded string in `db_comparison_data.js`; no spaces after commas)
 
 **Rules:** Booleans: `1` / `0`. Strings: plain text; double-quote fields that contain commas. `notes`: JSON object for caveat tooltips, CSV-escaped (`""` for quotes inside); empty if none.
 
@@ -70,10 +70,11 @@ Single export: `window.DB_CSV_DATA` (multi-line CSV string). Edit this file only
 | `oss`, `selfhost`, `lightweight`, `docker`, `single`, `lowops` | OSS, Self-hosted, … |
 | `ram`, `persistence`, `server`, `embeddable` | RAM, Persistence, Server, Embeddable |
 | `traversal`, `hybrid`, `rag`, `cypher` | Traversal, Hybrid, RAG, Cypher |
-| `lc`, `langs`, `compat` | LC/LI, Languages, OS Compat |
-| `url`, `src` | URL, Source |
+| `lc`, `langs`, `implang`, `compat` | LC/LI, Languages, Impl. lang, OS Compat |
+| `url`, `src`, `ghstars` | URL, Source, GH stars |
 | `released` | Released (`YYYY-MM`) |
 | `tagline` | Tagline |
+| `ideal` | Ideal use |
 | `notes` | Not shown as a column; JSON keys match boolean field ids — a key may supply a caveat for **on** or **off** depending on the cell value (see **`boolCell`**) |
 
 ### Boolean keys — meaning for `1` / `0`
@@ -103,7 +104,7 @@ Use these definitions when filling or auditing cells (judgment calls, not vendor
 
 **Release / status audit stamp (2026-05-04):** see **Released** and **Status** header tooltips (`th[data-col="released"]`, `th[data-col="active"]`).
 
-**Other string columns:** `name` — product label; `tagline` — one-line positioning; `released` — approximate first public availability **`YYYY-MM`**; `langs` — official client SDKs (free text); `compat` — OS support without Docker as the assumed path; `url` / `src` — website and repo URLs (empty if none).
+**Other string columns:** `name` — product label; `tagline` — one-line positioning; `ideal` — concise ideal use case / fit (editorial: where the product shines vs generic marketing); `released` — approximate first public availability **`YYYY-MM`**; `langs` — official client SDKs (free text); `implang` — primary implementation language(s) of the core server/engine (free text, from public source or stated stack; use **Proprietary (undisclosed)** when not public); `compat` — OS support without Docker as the assumed path; `url` / `src` — website and repo URLs (empty if none); **`ghstars`** — GitHub **`stargazers_count`** on the repo in **`src`** (ASCII integer; empty when no **`src`** or not applicable; refresh periodically — last filled **2026-05-06** in this repo).
 
 ### New boolean columns
 
@@ -114,11 +115,11 @@ Use these definitions when filling or auditing cells (judgment calls, not vendor
 
 - Dark bg default `#0d0f14`; accent yes `#4ade80`; caveat yes `#f97316`.
 - Fonts: Space Mono (headers/mono), DM Sans (body); loaded from Google Fonts.
-- Boolean and released columns: width **55px** (`.col-bool`, `.col-released`). Glow on yes-dots off in light theme.
+- Boolean columns: width **55px** (`.col-bool`). **Released** matches width **55px** (`.col-released`) but uses **`Space Mono`** + **tabular nums** + **11px** (with **`.langs-cell`**); **GH ★** is the same mono/tabular styling, right-aligned (**`.col-stars`**). **Tagline** and **Ideal use** share width **175px** (**`.col-tag`**, **`.col-ideal`**). Glow on yes-dots off in light theme.
 - **Off-with-caveat:** `.no-dot.inactive-note` — orange border / shadow on the gray off dot; pair with `data-tip` (see **Boolean caveat renderers**).
-- **Default visible** toggleable columns: Tagline, Released, Status, Vector DB, Graph DB, OSS, Self-hosted, Persistence, Server, OS Compat, URL, Source (12). DB Name always on; rest via COLUMNS panel.
+- **Default visible** toggleable columns: Tagline, Ideal use, Released, Status, Vector DB, Graph DB, OSS, Self-hosted, Persistence, Server, OS Compat, URL, Source, GH stars (14). DB Name always on; rest via COLUMNS panel.
 
 ## Known gaps
 
-- Tooltip positioning near viewport edges is rough.
-- No mobile layout; wide table + horizontal scroll.
+- No mobile-first layout; expect horizontal scroll on narrow viewports.
+
